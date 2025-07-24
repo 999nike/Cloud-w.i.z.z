@@ -1,0 +1,6 @@
+
+{
+  "routes": [
+    { "src": "/api/wizz", "methods": ["POST"], "dest": "api/wizz.js" }
+  ]
+}
