@@ -5,9 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cloud Wizz Online</title>
   <style>
+    :root {
+      --bg-color: #111;
+      --text-color: #0ff;
+      --user-bubble: #0ff;
+      --wizz-bubble: #222;
+    }
+    body.light {
+      --bg-color: #f9f9f9;
+      --text-color: #111;
+      --user-bubble: #d0f0ff;
+      --wizz-bubble: #e0e0e0;
+    }
     body {
-      background: #111;
-      color: #0ff;
+      background: var(--bg-color);
+      color: var(--text-color);
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 20px;
@@ -16,20 +28,20 @@
       width: 60%;
       padding: 10px;
       border-radius: 5px;
-      border: 1px solid #0ff;
+      border: 1px solid var(--text-color);
       background: #222;
-      color: #0ff;
+      color: var(--text-color);
     }
     button {
       padding: 10px 20px;
-      background: #0ff;
+      margin: 5px;
+      background: var(--text-color);
       border: none;
       border-radius: 5px;
       cursor: pointer;
-      color: #111;
+      color: var(--bg-color);
       font-weight: bold;
     }
-
     #chatHistory {
       display: flex;
       flex-direction: column;
@@ -39,9 +51,8 @@
       max-height: 60vh;
       padding: 10px;
       margin-top: 20px;
-      border-top: 1px solid #0ff;
+      border-top: 1px solid var(--text-color);
     }
-
     .message {
       max-width: 80%;
       margin: 5px;
@@ -51,53 +62,50 @@
       display: inline-block;
       word-wrap: break-word;
     }
-
     .user {
-      background-color: #0ff;
-      color: #111;
+      background-color: var(--user-bubble);
+      color: var(--bg-color);
       text-align: right;
       align-self: flex-end;
       border-top-right-radius: 0;
     }
-
     .wizz {
-      background-color: #222;
-      color: #0ff;
+      background-color: var(--wizz-bubble);
+      color: var(--text-color);
       border-top-left-radius: 0;
+    }
+    #typingIndicator {
+      font-style: italic;
+      margin-top: 5px;
     }
   </style>
 </head>
 <body>
   <h1>☁️ Cloud Wizz Online</h1>
-  <input type="text" id="userInput" placeholder="Ask Wizz...">
+  <input type="text" id="userInput" placeholder="Ask Wizz..." onkeydown="if(event.key==='Enter') askWizz()">
   <button onclick="askWizz()">Send</button>
+  <button onclick="clearChat()">🧼 Clear Chat</button>
+  <button onclick="clearMemory()">🧠 Clear Memory</button>
+  <button onclick="toggleTheme()">🌓 Toggle Theme</button>
 
   <div id="chatHistory"></div>
+  <div id="typingIndicator"></div>
 
-  function addToWizzMemory(question, answer) {
-  const memory = JSON.parse(localStorage.getItem("wizzMemory")) || [];
-  memory.push({ question, answer });
-  localStorage.setItem("wizzMemory", JSON.stringify(memory));
-}
+  <script>
+    const chatHistory = document.getElementById("chatHistory");
+    const typingIndicator = document.getElementById("typingIndicator");
 
-function getWizzMemory() {
-  return JSON.parse(localStorage.getItem("wizzMemory")) || [];
-}
+    function toggleTheme() {
+      const current = document.body.classList.toggle("light");
+      localStorage.setItem("wizzTheme", current ? "light" : "dark");
+    }
 
-function checkForMemoryPrompt(input) {
-  const prompt = input.toLowerCase();
-  if (prompt.includes("what do you remember") || prompt.includes("memory") || prompt.includes("do you recall")) {
-    const memory = getWizzMemory();
-    if (memory.length === 0) return "Wizz: I don't remember anything yet.";
+    function applyTheme() {
+      const theme = localStorage.getItem("wizzTheme");
+      if (theme === "light") document.body.classList.add("light");
+    }
 
-    let recall = "Wizz Memory Log:\n";
-    memory.slice(-5).forEach((item, index) => {
-      recall += `#${index + 1} Q: ${item.question} → A: ${item.answer}\n`;
-    });
-    return recall;
-  }
-  return null;
-  }() {
+    async function askWizz() {
       const input = document.getElementById("userInput");
       const question = input.value.trim();
       if (!question) return;
@@ -105,31 +113,35 @@ function checkForMemoryPrompt(input) {
       appendMessage("You", question);
       input.value = "";
 
-      appendMessage("Wizz", "⏳ Thinking...");
+      const memoryCheck = checkForMemoryPrompt(question);
+      if (memoryCheck) {
+        appendMessage("Wizz", memoryCheck);
+        saveToHistory("You", question);
+        saveToHistory("Wizz", memoryCheck);
+        return;
+      }
+
+      appendMessage("Wizz", "...");
+      typingIndicator.innerText = "Wizz is thinking...";
 
       try {
         const res = await fetch('/api/wizz?question=' + encodeURIComponent(question));
         const data = await res.json();
-
         updateLastWizzMessage(data.answer);
         saveToHistory("You", question);
         saveToHistory("Wizz", data.answer);
+        addToWizzMemory(question, data.answer);
       } catch (err) {
         updateLastWizzMessage("⚠️ Error: " + err.toString());
+      } finally {
+        typingIndicator.innerText = "";
       }
     }
 
     function appendMessage(sender, message) {
       const msg = document.createElement("div");
       msg.classList.add("message");
-
-      if (sender === "You") {
-        msg.classList.add("user");
-        msg.style.alignSelf = "flex-end";
-      } else {
-        msg.classList.add("wizz");
-      }
-
+      msg.classList.add(sender === "You" ? "user" : "wizz");
       msg.innerHTML = `<b>${sender}:</b><br>${message}`;
       chatHistory.appendChild(msg);
       chatHistory.scrollTop = chatHistory.scrollHeight;
@@ -152,6 +164,42 @@ function checkForMemoryPrompt(input) {
       history.forEach(item => appendMessage(item.sender, item.msg));
     }
 
+    function addToWizzMemory(question, answer) {
+      const memory = JSON.parse(localStorage.getItem("wizzMemory")) || [];
+      memory.push({ question, answer });
+      localStorage.setItem("wizzMemory", JSON.stringify(memory));
+    }
+
+    function getWizzMemory() {
+      return JSON.parse(localStorage.getItem("wizzMemory")) || [];
+    }
+
+    function checkForMemoryPrompt(input) {
+      const prompt = input.toLowerCase();
+      if (prompt.includes("what do you remember") || prompt.includes("memory") || prompt.includes("recall")) {
+        const memory = getWizzMemory();
+        if (memory.length === 0) return "Wizz: I don't remember anything yet.";
+
+        let recall = "🧠 Wizz Memory Log:\n";
+        memory.slice(-5).forEach((item, i) => {
+          recall += `#${i + 1} Q: ${item.question} → A: ${item.answer}\n`;
+        });
+        return recall;
+      }
+      return null;
+    }
+
+    function clearChat() {
+      localStorage.removeItem("wizzChat");
+      chatHistory.innerHTML = "";
+    }
+
+    function clearMemory() {
+      localStorage.removeItem("wizzMemory");
+      alert("Wizz memory cleared.");
+    }
+
+    applyTheme();
     loadHistory();
   </script>
 </body>
