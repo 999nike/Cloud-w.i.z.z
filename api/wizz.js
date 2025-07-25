@@ -14,10 +14,10 @@ module.exports = async (req, res) => {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`,
-        "HTTP-Referer": "https://cloud-wizz.vercel.app"  // Replace with your deployed domain
+        "HTTP-Referer": "https://cloud-wizz.vercel.app"  // Update if your domain changes
       },
       body: JSON.stringify({
-        model: "openai/gpt-3.5-turbo", // Or try "meta-llama/llama-3-8b-instruct"
+        model: "openai/gpt-3.5-turbo", // You can also try "meta-llama/llama-3-8b-instruct"
         messages: [{ role: "user", content: question }],
         max_tokens: 100,
         temperature: 0.7
@@ -33,6 +33,7 @@ module.exports = async (req, res) => {
     }
 
     res.status(200).json({ answer: reply });
+
   } catch (err) {
     console.error("❌ Wizz Error:", err);
     res.status(500).json({ answer: "Wizz: Failed to contact the brain server." });
