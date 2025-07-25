@@ -24,7 +24,7 @@ module.exports = async (req, res) => {
     });
 
     const data = await response.json();
-
+    console.log("🧪 RAW OpenAI JSON:", JSON.stringify(data, null, 2)); // 
     // Debug: Log raw OpenAI response
     console.log("🔍 OpenAI Response:", JSON.stringify(data, null, 2));
 
