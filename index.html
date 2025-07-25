@@ -74,10 +74,30 @@
 
   <div id="chatHistory"></div>
 
-  <script>
-    const chatHistory = document.getElementById("chatHistory");
+  function addToWizzMemory(question, answer) {
+  const memory = JSON.parse(localStorage.getItem("wizzMemory")) || [];
+  memory.push({ question, answer });
+  localStorage.setItem("wizzMemory", JSON.stringify(memory));
+}
 
-    async function askWizz() {
+function getWizzMemory() {
+  return JSON.parse(localStorage.getItem("wizzMemory")) || [];
+}
+
+function checkForMemoryPrompt(input) {
+  const prompt = input.toLowerCase();
+  if (prompt.includes("what do you remember") || prompt.includes("memory") || prompt.includes("do you recall")) {
+    const memory = getWizzMemory();
+    if (memory.length === 0) return "Wizz: I don't remember anything yet.";
+
+    let recall = "Wizz Memory Log:\n";
+    memory.slice(-5).forEach((item, index) => {
+      recall += `#${index + 1} Q: ${item.question} → A: ${item.answer}\n`;
+    });
+    return recall;
+  }
+  return null;
+  }() {
       const input = document.getElementById("userInput");
       const question = input.value.trim();
       if (!question) return;
