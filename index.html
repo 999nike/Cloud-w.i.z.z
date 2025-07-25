@@ -1,34 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cloud Wizz Online</title>
   <style>
-    body { background: #111; color: #0ff; font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-    input { width: 60%; padding: 10px; border-radius: 5px; border: 1px solid #0ff; background: #222; color: #0ff; }
-    button { padding: 10px 20px; background: #0ff; border: none; border-radius: 5px; cursor: pointer; color: #111; font-weight: bold; }
-    #response { margin-top: 20px; }
+    body {
+      background: #111;
+      color: #0ff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    input {
+      width: 60%;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #0ff;
+      background: #222;
+      color: #0ff;
+    }
+    button {
+      padding: 10px 20px;
+      background: #0ff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      color: #111;
+      font-weight: bold;
+    }
+
+    #chatHistory {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      overflow-y: auto;
+      max-height: 60vh;
+      padding: 10px;
+      margin-top: 20px;
+      border-top: 1px solid #0ff;
+    }
+
+    .message {
+      max-width: 80%;
+      margin: 5px;
+      padding: 10px 15px;
+      border-radius: 12px;
+      line-height: 1.4;
+      display: inline-block;
+      word-wrap: break-word;
+    }
+
+    .user {
+      background-color: #0ff;
+      color: #111;
+      text-align: right;
+      align-self: flex-end;
+      border-top-right-radius: 0;
+    }
+
+    .wizz {
+      background-color: #222;
+      color: #0ff;
+      border-top-left-radius: 0;
+    }
   </style>
 </head>
 <body>
   <h1>☁️ Cloud Wizz Online</h1>
   <input type="text" id="userInput" placeholder="Ask Wizz...">
   <button onclick="askWizz()">Send</button>
-  <div id="response"></div>
+
+  <div id="chatHistory"></div>
+
   <script>
+    const chatHistory = document.getElementById("chatHistory");
+
     async function askWizz() {
-      const input = document.getElementById('userInput').value;
-      const responseDiv = document.getElementById('response');
-      responseDiv.innerHTML = "Thinking...";
+      const input = document.getElementById("userInput");
+      const question = input.value.trim();
+      if (!question) return;
+
+      appendMessage("You", question);
+      input.value = "";
+
+      appendMessage("Wizz", "⏳ Thinking...");
+
       try {
-        const res = await fetch('/api/wizz?question=' + encodeURIComponent(input));
+        const res = await fetch('/api/wizz?question=' + encodeURIComponent(question));
         const data = await res.json();
-        responseDiv.innerHTML = '<b>Wizz:</b> ' + data.answer;
+
+        updateLastWizzMessage(data.answer);
+        saveToHistory("You", question);
+        saveToHistory("Wizz", data.answer);
       } catch (err) {
-        responseDiv.innerHTML = 'Error: ' + err;
+        updateLastWizzMessage("⚠️ Error: " + err.toString());
       }
     }
+
+    function appendMessage(sender, message) {
+      const msg = document.createElement("div");
+      msg.classList.add("message");
+
+      if (sender === "You") {
+        msg.classList.add("user");
+        msg.style.alignSelf = "flex-end";
+      } else {
+        msg.classList.add("wizz");
+      }
+
+      msg.innerHTML = `<b>${sender}:</b><br>${message}`;
+      chatHistory.appendChild(msg);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    function updateLastWizzMessage(newMsg) {
+      const allMsgs = chatHistory.querySelectorAll("div.message");
+      const last = allMsgs[allMsgs.length - 1];
+      last.innerHTML = `<b>Wizz:</b><br>${newMsg}`;
+    }
+
+    function saveToHistory(sender, msg) {
+      const history = JSON.parse(localStorage.getItem("wizzChat")) || [];
+      history.push({ sender, msg });
+      localStorage.setItem("wizzChat", JSON.stringify(history));
+    }
+
+    function loadHistory() {
+      const history = JSON.parse(localStorage.getItem("wizzChat")) || [];
+      history.forEach(item => appendMessage(item.sender, item.msg));
+    }
+
+    loadHistory();
   </script>
 </body>
 </html>
