@@ -2,7 +2,7 @@
 
 module.exports = async (req, res) => {
   const question = req.query.question || 'Hello Wizz';
-  const apiKey = process.env.OPENAI_API_KEY;
+  const apiKey = process.env.OPEN_AI_API_KEY;
 
   if (!apiKey) {
     return res.status(500).json({ answer: "API key not set" });
