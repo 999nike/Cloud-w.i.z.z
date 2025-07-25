@@ -1,7 +1,5 @@
 // File: api/wizz.js
 
-const fetch = require('node-fetch');
-
 module.exports = async (req, res) => {
   const question = req.query.question || 'Hello Wizz';
   const apiKey = process.env.OPENAI_API_KEY;
