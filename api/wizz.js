@@ -1,3 +1,5 @@
+// File: api/wizz.js
+
 const fetch = require('node-fetch');
 
 module.exports = async (req, res) => {
@@ -9,23 +11,22 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const completion = await fetch("https://api.openai.com/v1/completions", {
+    const completion = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + apiKey
       },
       body: JSON.stringify({
-        model: "text-davinci-003",
-        prompt: question,
+        model: "gpt-3.5-turbo",
+        messages: [{ role: "user", content: question }],
         max_tokens: 50
       })
     });
 
     const data = await completion.json();
-    const answer = data.choices?.[0]?.text?.trim() || "No response";
-    return res.status(200).json({ answer });
+    res.status(200).json({ answer: data.choices?.[0]?.message?.content?.trim() || "No response" });
   } catch (err) {
-    return res.status(500).json({ answer: "Error: " + err.toString() });
+    res.status(500).json({ answer: "Error: " + err.toString() });
   }
 };
