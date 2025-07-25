@@ -91,116 +91,92 @@
   <div id="chatHistory"></div>
   <div id="typingIndicator"></div>
 
-  <script>
-    const chatHistory = document.getElementById("chatHistory");
-    const typingIndicator = document.getElementById("typingIndicator");
+  <script src="CloudWizz_MemoryBank_v1.js"></script>
+<script>
+  const chatHistory = document.getElementById("chatHistory");
+  const typingIndicator = document.getElementById("typingIndicator");
 
-    function toggleTheme() {
-      const current = document.body.classList.toggle("light");
-      localStorage.setItem("wizzTheme", current ? "light" : "dark");
+  function toggleTheme() {
+    const isLight = document.body.classList.toggle("light");
+    localStorage.setItem("wizzTheme", isLight ? "light" : "dark");
+  }
+
+  function applyTheme() {
+    const saved = localStorage.getItem("wizzTheme");
+    if (saved === "light") document.body.classList.add("light");
+  }
+
+  async function askWizz() {
+    const input = document.getElementById("userInput");
+    const question = input.value.trim();
+    if (!question) return;
+
+    appendMessage("You", question);
+    input.value = "";
+
+    const memoryReply = checkMemoryTriggers(question);
+    if (memoryReply) {
+      appendMessage("Wizz", memoryReply);
+      logChat({ user: question, bot: memoryReply });
+      saveToHistory("You", question);
+      saveToHistory("Wizz", memoryReply);
+      return;
     }
 
-    function applyTheme() {
-      const theme = localStorage.getItem("wizzTheme");
-      if (theme === "light") document.body.classList.add("light");
+    appendMessage("Wizz", "...");
+    typingIndicator.innerText = "Wizz is thinking...";
+
+    try {
+      const res = await fetch('/api/wizz?question=' + encodeURIComponent(question));
+      const data = await res.json();
+      updateLastWizzMessage(data.answer);
+      saveToHistory("You", question);
+      saveToHistory("Wizz", data.answer);
+      logChat({ user: question, bot: data.answer });
+    } catch (err) {
+      updateLastWizzMessage("⚠️ Error: " + err.toString());
+    } finally {
+      typingIndicator.innerText = "";
     }
+  }
 
-    async function askWizz() {
-      const input = document.getElementById("userInput");
-      const question = input.value.trim();
-      if (!question) return;
+  function appendMessage(sender, message) {
+    const msg = document.createElement("div");
+    msg.classList.add("message", sender === "You" ? "user" : "wizz");
+    msg.innerHTML = `<b>${sender}:</b><br>${message}`;
+    chatHistory.appendChild(msg);
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+  }
 
-      appendMessage("You", question);
-      input.value = "";
+  function updateLastWizzMessage(newMsg) {
+    const messages = chatHistory.querySelectorAll("div.message");
+    const last = messages[messages.length - 1];
+    last.innerHTML = `<b>Wizz:</b><br>${newMsg}`;
+  }
 
-      const memoryCheck = checkForMemoryPrompt(question);
-      if (memoryCheck) {
-        appendMessage("Wizz", memoryCheck);
-        saveToHistory("You", question);
-        saveToHistory("Wizz", memoryCheck);
-        return;
-      }
+  function saveToHistory(sender, msg) {
+    const history = JSON.parse(localStorage.getItem("wizzChat")) || [];
+    history.push({ sender, msg });
+    localStorage.setItem("wizzChat", JSON.stringify(history));
+  }
 
-      appendMessage("Wizz", "...");
-      typingIndicator.innerText = "Wizz is thinking...";
+  function loadHistory() {
+    const history = JSON.parse(localStorage.getItem("wizzChat")) || [];
+    history.forEach(item => appendMessage(item.sender, item.msg));
+  }
 
-      try {
-        const res = await fetch('/api/wizz?question=' + encodeURIComponent(question));
-        const data = await res.json();
-        updateLastWizzMessage(data.answer);
-        saveToHistory("You", question);
-        saveToHistory("Wizz", data.answer);
-        addToWizzMemory(question, data.answer);
-      } catch (err) {
-        updateLastWizzMessage("⚠️ Error: " + err.toString());
-      } finally {
-        typingIndicator.innerText = "";
-      }
-    }
+  function clearChat() {
+    localStorage.removeItem("wizzChat");
+    chatHistory.innerHTML = "";
+  }
 
-    function appendMessage(sender, message) {
-      const msg = document.createElement("div");
-      msg.classList.add("message");
-      msg.classList.add(sender === "You" ? "user" : "wizz");
-      msg.innerHTML = `<b>${sender}:</b><br>${message}`;
-      chatHistory.appendChild(msg);
-      chatHistory.scrollTop = chatHistory.scrollHeight;
-    }
+  function clearMemory() {
+    localStorage.removeItem("cloudWizzMemory");
+    alert("🧠 Wizz memory cleared.");
+  }
 
-    function updateLastWizzMessage(newMsg) {
-      const allMsgs = chatHistory.querySelectorAll("div.message");
-      const last = allMsgs[allMsgs.length - 1];
-      last.innerHTML = `<b>Wizz:</b><br>${newMsg}`;
-    }
-
-    function saveToHistory(sender, msg) {
-      const history = JSON.parse(localStorage.getItem("wizzChat")) || [];
-      history.push({ sender, msg });
-      localStorage.setItem("wizzChat", JSON.stringify(history));
-    }
-
-    function loadHistory() {
-      const history = JSON.parse(localStorage.getItem("wizzChat")) || [];
-      history.forEach(item => appendMessage(item.sender, item.msg));
-    }
-
-    function addToWizzMemory(question, answer) {
-      const memory = JSON.parse(localStorage.getItem("wizzMemory")) || [];
-      memory.push({ question, answer });
-      localStorage.setItem("wizzMemory", JSON.stringify(memory));
-    }
-
-    function getWizzMemory() {
-      return JSON.parse(localStorage.getItem("wizzMemory")) || [];
-    }
-
-    function checkForMemoryPrompt(input) {
-      const prompt = input.toLowerCase();
-      if (prompt.includes("what do you remember") || prompt.includes("memory") || prompt.includes("recall")) {
-        const memory = getWizzMemory();
-        if (memory.length === 0) return "Wizz: I don't remember anything yet.";
-
-        let recall = "🧠 Wizz Memory Log:\n";
-        memory.slice(-5).forEach((item, i) => {
-          recall += `#${i + 1} Q: ${item.question} → A: ${item.answer}\n`;
-        });
-        return recall;
-      }
-      return null;
-    }
-
-    function clearChat() {
-      localStorage.removeItem("wizzChat");
-      chatHistory.innerHTML = "";
-    }
-
-    function clearMemory() {
-      localStorage.removeItem("wizzMemory");
-      alert("Wizz memory cleared.");
-    }
-
-    applyTheme();
-    loadHistory();
-  </script>
+  applyTheme();
+  loadHistory();
+</script>
 </body>
 </html>
