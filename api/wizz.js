@@ -1,4 +1,7 @@
 // File: api/wizz.js
+// 🧠 Wizz API with Rule Awareness + OpenRouter Chat Completion
+
+const rules = require('../CloudWizz_RuleCore_v2');
 
 module.exports = async (req, res) => {
   const question = req.query.question || 'Hello Wizz';
@@ -6,6 +9,19 @@ module.exports = async (req, res) => {
 
   if (!apiKey) {
     return res.status(500).json({ answer: "Wizz: API key not set." });
+  }
+
+  // 🧠 Check if user asked for rules
+  const normalized = question.toLowerCase().trim();
+  if (normalized === "what are your rules" || normalized === "show me the rules") {
+    const ruleSummary = `
+🧠 Wizz Rules Active:
+• TIER 1: ${rules.TIER_1.length} System Core
+• TIER 2: ${rules.TIER_2.length} Structure & Code
+• TIER 3: ${rules.TIER_3.length} Memory & UX
+(Full rule engine loaded from CloudWizz_RuleCore_v2.js)
+    `.trim();
+    return res.status(200).json({ answer: ruleSummary });
   }
 
   try {
@@ -24,18 +40,5 @@ module.exports = async (req, res) => {
       })
     });
 
-    const data = await response.json();
-    console.log("🧠 OpenRouter Response:", JSON.stringify(data, null, 2));
+    const
 
-    const reply = data?.choices?.[0]?.message?.content?.trim();
-    if (!reply) {
-      return res.status(200).json({ answer: "Wizz: No valid reply received. Try again?" });
-    }
-
-    res.status(200).json({ answer: reply });
-
-  } catch (err) {
-    console.error("❌ Wizz Error:", err);
-    res.status(500).json({ answer: "Wizz: Failed to contact the brain server." });
-  }
-};
