@@ -11,7 +11,7 @@ module.exports = async (req, res) => {
     return res.status(500).json({ answer: "Wizz: API key not set." });
   }
 
-  // 🧠 Check if user asked for rules
+  // 🧠 Rules: Respond if user asks about rules
   const normalized = question.toLowerCase().trim();
   if (normalized === "what are your rules" || normalized === "show me the rules") {
     const ruleSummary = `
@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
 • TIER 1: ${rules.TIER_1.length} System Core
 • TIER 2: ${rules.TIER_2.length} Structure & Code
 • TIER 3: ${rules.TIER_3.length} Memory & UX
-(Full rule engine loaded from CloudWizz_RuleCore_v2.js)
+(Loaded from CloudWizz_RuleCore_v2.js)
     `.trim();
     return res.status(200).json({ answer: ruleSummary });
   }
@@ -30,15 +30,35 @@ module.exports = async (req, res) => {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`,
-        "HTTP-Referer": "https://cloud-wizz.vercel.app"  // Update if your domain changes
+        "HTTP-Referer": "https://cloud-wizz.vercel.app"
       },
       body: JSON.stringify({
-        model: "openai/gpt-3.5-turbo", // You can also try "meta-llama/llama-3-8b-instruct"
+        model: "openai/gpt-3.5-turbo", // Or use another OpenRouter model
         messages: [{ role: "user", content: question }],
-        max_tokens: 100,
+        max_tokens: 150,
         temperature: 0.7
       })
     });
 
-    const
+    const text = await response.text();
 
+    try {
+      const data = JSON.parse(text);
+      const reply = data?.choices?.[0]?.message?.content?.trim();
+
+      if (!reply) {
+        return res.status(200).json({ answer: "Wizz: No valid reply received. Try again?" });
+      }
+
+      return res.status(200).json({ answer: reply });
+
+    } catch (jsonErr) {
+      console.error("⚠️ JSON parse failed:", text);
+      return res.status(500).json({ answer: "Wizz: Failed to parse response from brain." });
+    }
+
+  } catch (err) {
+    console.error("❌ Wizz Error:", err);
+    res.status(500).json({ answer: "Wizz: Server error, brain disconnected." });
+  }
+};
