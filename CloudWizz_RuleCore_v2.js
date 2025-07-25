@@ -1,26 +1,91 @@
-// CloudWizz_RuleCore_v2.js
-// 🧠 Core editable rule module for Cloud Wizz Online
+// File: CloudWizz_MemoryBank_v1.js
+// ☁️ Wizz Persistent Memory Layer (Local v1 - Can upgrade to server/DB later)
 
-module.exports = {
-  TIER_1: [
-    "DevMaster is absolute controller of Wizz AI logic.",
-    "Never overwrite or delete core memory unless explicitly told.",
-    "Always check for rule file presence on load.",
-    "Do not auto-upgrade unless versioning is approved by DevMaster.",
-    "“No Panic. No Loss. We Build.” is survival mode. Preserve progress always."
-  ],
-  TIER_2: [
-    "Default language: JavaScript / Node.js unless overridden.",
-    "Folder structure: flat layout (api/, utils/, models/, etc).",
-    "Functions must follow single responsibility rule.",
-    "Use meaningful names; no placeholders like foo or test.",
-    "Provide full copy-pasteable code blocks, never partials."
-  ],
-  TIER_3: [
-    "Remember DevMaster identity: name = Nike, role = DevMaster.",
-    "Chat memory defaults to localStorage unless extended.",
-    "Max reminders = 5 unless overridden.",
-    "Support commands like 'List my reminders', 'Who am I?', etc.",
-    "UI must support mobile view, dark mode, and minimal distractions."
-  ]
+const memoryStore = {
+  name: null,
+  traits: [],
+  reminders: [],
+  lastChat: []
 };
+
+// Load from localStorage if available
+function loadMemory() {
+  const raw = localStorage.getItem("cloudWizzMemory");
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      Object.assign(memoryStore, parsed);
+    } catch (e) {
+      console.warn("🧠 Failed to parse memory:", e);
+    }
+  }
+}
+
+// Save current memory state
+function saveMemory() {
+  localStorage.setItem("cloudWizzMemory", JSON.stringify(memoryStore));
+}
+
+// Helper: Update memory items
+function rememberName(name) {
+  memoryStore.name = name;
+  saveMemory();
+  return `✅ Got it. I'll call you ${name}.`;
+}
+
+function addTrait(trait) {
+  if (!memoryStore.traits.includes(trait)) memoryStore.traits.push(trait);
+  saveMemory();
+}
+
+function addReminder(msg) {
+  memoryStore.reminders.push(msg);
+  saveMemory();
+}
+
+function logChat(entry) {
+  memoryStore.lastChat.push(entry);
+  if (memoryStore.lastChat.length > 20) memoryStore.lastChat.shift();
+  saveMemory();
+}
+
+function recallMemorySummary() {
+  const name = memoryStore.name || "stranger";
+  const traits = memoryStore.traits.join(", ") || "none";
+  const reminders = memoryStore.reminders.map((r, i) => `• ${r}`).join("\n") || "none";
+  return `👤 You are ${name}.
+🧬 Traits: ${traits}
+📌 Reminders:
+${reminders}`;
+}
+
+// Memory Match Trigger (natural language)
+function checkMemoryTriggers(input) {
+  const lower = input.toLowerCase();
+
+  if (lower.startsWith("my name is ")) {
+    const name = input.split("is ")[1].trim();
+    return rememberName(name);
+  }
+
+  if (lower.includes("add trait ")) {
+    const trait = input.split("add trait ")[1].trim();
+    addTrait(trait);
+    return `🧠 Trait "${trait}" added.`;
+  }
+
+  if (lower.includes("add reminder")) {
+    const note = input.split("add reminder")[1].trim();
+    addReminder(note);
+    return `📌 Reminder added: ${note}`;
+  }
+
+  if (lower.includes("what do you remember") || lower.includes("who am i")) {
+    return recallMemorySummary();
+  }
+
+  return null;
+}
+
+// ⏫ Ready to hook into frontend
+loadMemory();
