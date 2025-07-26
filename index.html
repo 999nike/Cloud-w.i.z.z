@@ -192,21 +192,18 @@
         return rememberName(name);
       }
 
-      if (lower.includes("add trait ")) {
-        const trait = input.split("add trait ")[1].trim();
-        addTrait(trait);
-        return `🧠 Trait "${trait}" added.`;
-      }
+      if (lower.startsWith("add trait ")) {
+  const trait = input.substring(10).trim();
+  addTrait(trait);
+  return `🧠 Trait "${trait}" added.`;
+}
 
-      if (lower.includes("add reminder")) {
-        const note = input.split("add reminder")[1].trim();
-        addReminder(note);
-        return `📌 Reminder added: ${note}`;
-      }
+if (lower.startsWith("add reminder ")) {
+  const note = input.substring(13).trim();
+  addReminder(note);
+  return `📌 Reminder added: ${note}`;
+}
 
-      if (lower.includes("what do you remember") || lower.includes("who am i")) {
-        return recallMemorySummary();
-      }
 
       return null;
     }
