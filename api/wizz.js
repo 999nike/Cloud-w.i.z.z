@@ -1,7 +1,6 @@
 // File: api/wizz.js
-// ✅ Wizz API using OpenRouter + Rule Awareness
+// 🧠 Wizz API using OpenRouter — clean, no rule imports, fully stable
 
-const rules = require('../CloudWizz_RuleCore_v2');
 const fetch = require('node-fetch');
 
 module.exports = async (req, res) => {
@@ -9,20 +8,7 @@ module.exports = async (req, res) => {
   const apiKey = process.env.OPENROUTER_API_KEY;
 
   if (!apiKey) {
-    return res.status(500).json({ answer: "Wizz: API key not set." });
-  }
-
-  // 📜 Rule logic
-  const normalized = question.toLowerCase().trim();
-  if (normalized === "what are your rules" || normalized === "show me the rules") {
-    const ruleSummary = `
-🧠 Wizz Rules Active:
-• TIER 1: ${rules.TIER_1.length} System Core
-• TIER 2: ${rules.TIER_2.length} Structure & Code
-• TIER 3: ${rules.TIER_3.length} Memory & UX
-(Loaded from CloudWizz_RuleCore_v2.js)
-    `.trim();
-    return res.status(200).json({ answer: ruleSummary });
+    return res.status(500).json({ answer: "Wizz: OPENROUTER_API_KEY not set." });
   }
 
   try {
@@ -31,10 +17,10 @@ module.exports = async (req, res) => {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`,
-        "HTTP-Referer": "https://cloud-wizz.vercel.app" // Required by OpenRouter
+        "HTTP-Referer": "https://cloud-wizz.vercel.app" // <-- update if your URL changes
       },
       body: JSON.stringify({
-        model: "openai/gpt-3.5-turbo", // Or try meta/llama3
+        model: "openai/gpt-3.5-turbo",
         messages: [{ role: "user", content: question }],
         max_tokens: 150,
         temperature: 0.7
@@ -42,18 +28,15 @@ module.exports = async (req, res) => {
     });
 
     const text = await response.text();
-
     try {
       const data = JSON.parse(text);
       const reply = data?.choices?.[0]?.message?.content?.trim();
-      return res.status(200).json({ answer: reply || "Wizz: No valid reply received." });
+      return res.status(200).json({ answer: reply || "Wizz: No reply received." });
     } catch {
-      console.error("❌ Parse Fail:", text);
-      return res.status(500).json({ answer: "Wizz: Failed to parse OpenRouter response." });
+      return res.status(500).json({ answer: "Wizz: Could not parse response:\n" + text });
     }
 
   } catch (err) {
-    console.error("❌ Wizz Error:", err);
-    return res.status(500).json({ answer: "Wizz: Server error while contacting OpenRouter." });
+    return res.status(500).json({ answer: "Wizz: Failed to contact OpenRouter." });
   }
 };
