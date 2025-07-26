@@ -25,18 +25,16 @@
     #chatContainer {
       flex: 1;
       display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
+      flex-direction: column-reverse;
       overflow-y: auto;
+      padding-bottom: 120px;
     }
 
     #chatHistory {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      overflow-y: auto;
       padding: 20px;
-      padding-bottom: 100px;
     }
 
     .message {
@@ -64,27 +62,27 @@
     #inputArea {
       display: flex;
       flex-wrap: wrap;
+      justify-content: center;
       padding: 10px;
       background: rgba(0, 0, 0, 0.9);
       position: fixed;
       bottom: 0;
       width: 100%;
       gap: 6px;
-      z-index: 1000;
+      z-index: 9999;
     }
 
     input {
-      flex: 1 1 60%;
+      flex: 1 1 100%;
       padding: 10px;
       border-radius: 5px;
       border: none;
       background: #222;
       color: #0ff;
-      min-width: 100px;
     }
 
     button {
-      flex: 1 1 auto;
+      flex: 1 1 22%;
       padding: 10px;
       background: #0ff;
       border: none;
@@ -92,7 +90,7 @@
       font-weight: bold;
       color: #111;
       cursor: pointer;
-      min-width: 60px;
+      min-width: 70px;
     }
 
     #typingIndicator {
@@ -104,12 +102,6 @@
       text-align: center;
       margin: 10px;
       text-shadow: 0 0 5px #0ff;
-    }
-
-    @media (max-width: 600px) {
-      button {
-        flex: 1 1 45%;
-      }
     }
   </style>
 </head>
@@ -259,7 +251,7 @@
       msg.classList.add("message", sender === "You" ? "user" : "wizz");
       msg.innerHTML = `<b>${sender}:</b><br>${message}`;
       chatHistory.appendChild(msg);
-      chatHistory.scrollTop = chatHistory.scrollHeight;
+      chatHistory.scrollIntoView({ behavior: "smooth", block: "end" });
     }
 
     function updateLastWizzMessage(newMsg) {
