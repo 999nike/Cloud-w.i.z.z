@@ -1,11 +1,12 @@
-// File: api/wizz.js
-// 🧠 Wizz API with Rule Awareness + OpenRouter Chat Completion
+// File: api/wizz.js 
+// 🧠 Wizz API with Rule Awareness + Native OpenAI Chat Completion
 
 const rules = require('../CloudWizz_RuleCore_v2');
+const fetch = require('node-fetch');
 
 module.exports = async (req, res) => {
   const question = req.query.question || 'Hello Wizz';
-  const apiKey = process.env.OPENROUTER_API_KEY;
+  const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
     return res.status(500).json({ answer: "Wizz: API key not set." });
@@ -25,15 +26,14 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-        "HTTP-Referer": "https://cloud-wizz.vercel.app"
+        "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        model: "openai/gpt-3.5-turbo", // Or use another OpenRouter model
+        model: "gpt-3.5-turbo", // You can also try gpt-4 if your key supports it
         messages: [{ role: "user", content: question }],
         max_tokens: 150,
         temperature: 0.7
