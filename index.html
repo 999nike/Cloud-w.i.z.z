@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,91 +6,117 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cloud Wizz Online</title>
   <style>
-    :root {
-      --bg-color: #111;
-      --text-color: #0ff;
-      --user-bubble: #0ff;
-      --wizz-bubble: #222;
-    }
-    body.light {
-      --bg-color: #f9f9f9;
-      --text-color: #111;
-      --user-bubble: #d0f0ff;
-      --wizz-bubble: #e0e0e0;
-    }
-    body {
-      background: var(--bg-color);
-      color: var(--text-color);
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
       font-family: Arial, sans-serif;
-      text-align: center;
-      padding: 20px;
+      background: url('frosty.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #0ff;
+      display: flex;
+      flex-direction: column;
     }
-    input {
-      width: 60%;
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid var(--text-color);
-      background: #222;
-      color: var(--text-color);
+
+    body.light {
+      background: #f9f9f9;
+      color: #111;
     }
-    button {
-      padding: 10px 20px;
-      margin: 5px;
-      background: var(--text-color);
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      color: var(--bg-color);
-      font-weight: bold;
+
+    #chatContainer {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      overflow-y: auto;
     }
+
     #chatHistory {
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
       gap: 6px;
       overflow-y: auto;
-      max-height: 60vh;
-      padding: 10px;
-      margin-top: 20px;
-      border-top: 1px solid var(--text-color);
+      padding: 20px;
+      padding-bottom: 90px;
     }
+
     .message {
       max-width: 80%;
-      margin: 5px;
       padding: 10px 15px;
       border-radius: 12px;
       line-height: 1.4;
-      display: inline-block;
       word-wrap: break-word;
+      background: rgba(0,0,0,0.6);
+      color: #0ff;
     }
+
     .user {
-      background-color: var(--user-bubble);
-      color: var(--bg-color);
-      text-align: right;
       align-self: flex-end;
+      background-color: rgba(0,255,255,0.8);
+      color: #111;
       border-top-right-radius: 0;
     }
+
     .wizz {
-      background-color: var(--wizz-bubble);
-      color: var(--text-color);
+      align-self: flex-start;
       border-top-left-radius: 0;
     }
+
+    #inputArea {
+      display: flex;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.9);
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      gap: 6px;
+      z-index: 1000;
+    }
+
+    input {
+      flex: 1;
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      background: #222;
+      color: #0ff;
+    }
+
+    button {
+      padding: 10px 14px;
+      background: #0ff;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      color: #111;
+      cursor: pointer;
+    }
+
     #typingIndicator {
       font-style: italic;
-      margin-top: 5px;
+      margin: 10px 20px;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 10px;
+      text-shadow: 0 0 5px #0ff;
     }
   </style>
 </head>
 <body>
   <h1>☁️ Cloud Wizz Online</h1>
-  <input type="text" id="userInput" placeholder="Ask Wizz..." onkeydown="if(event.key==='Enter') askWizz()">
-  <button onclick="askWizz()">Send</button>
-  <button onclick="clearChat()">🧼 Clear Chat</button>
-  <button onclick="clearMemory()">🧠 Clear Memory</button>
-  <button onclick="toggleTheme()">🌓 Toggle Theme</button>
-
-  <div id="chatHistory"></div>
-  <div id="typingIndicator"></div>
+  <div id="chatContainer">
+    <div id="chatHistory"></div>
+    <div id="typingIndicator"></div>
+  </div>
+  <div id="inputArea">
+    <input type="text" id="userInput" placeholder="Ask Wizz..." onkeydown="if(event.key==='Enter') askWizz()">
+    <button onclick="askWizz()">Send</button>
+    <button onclick="clearChat()">🧼</button>
+    <button onclick="clearMemory()">🧠</button>
+    <button onclick="toggleTheme()">🌓</button>
+  </div>
 
   <script>
     const memoryStore = {
@@ -146,28 +173,28 @@
 
     function checkMemoryTriggers(input) {
       const lower = input.toLowerCase();
-
+      if (lower === "reset wizz" || lower === "flush memory") {
+        localStorage.removeItem("cloudWizzMemory");
+        localStorage.removeItem("wizzChat");
+        return `🧠 SYSTEM SYNC: Cloud Wizz Reset Successful\n🧍 Dev Master active | Memory flushed\n📂 Ready for clean re-activation in new thread`;
+      }
       if (lower.startsWith("my name is ")) {
         const name = input.split("is ")[1].trim();
         return rememberName(name);
       }
-
       if (lower.includes("add trait ")) {
         const trait = input.split("add trait ")[1].trim();
         addTrait(trait);
         return `🧠 Trait "${trait}" added.`;
       }
-
       if (lower.includes("add reminder")) {
         const note = input.split("add reminder")[1].trim();
         addReminder(note);
         return `📌 Reminder added: ${note}`;
       }
-
       if (lower.includes("what do you remember") || lower.includes("who am i")) {
         return recallMemorySummary();
       }
-
       return null;
     }
 
