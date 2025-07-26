@@ -307,7 +307,10 @@
     addTrait("Project leader");
     addTrait("Rules Architect");
     addTrait("Builder of Wizz");
-    addReminder("Always follow Dev Master's instructions");
+    if (!memoryStore.reminders.includes("Always follow Dev Master's instructions")) {
+  addReminder("Always follow Dev Master's instructions");
+}
+
   </script>
 
   <script src="CloudWizz_RuleCore_v2.js"></script>
