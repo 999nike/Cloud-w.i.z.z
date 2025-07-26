@@ -1,9 +1,12 @@
+<!-- File: index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cloud Wizz Online</title>
+  <meta name="description" content="Wizz rules, structure, brains 🧠">
+  <link rel="icon" type="image/png" href="frosty.jpg" />
   <style>
     html, body {
       margin: 0;
@@ -18,10 +21,10 @@
     }
 
     body.light {
-  background: url('frosty.jpg') no-repeat center center fixed;
-  background-size: cover;
-  color: #111;
-}
+      background: url('frosty.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #111;
+    }
 
     h1 {
       text-align: center;
@@ -123,77 +126,25 @@
   </div>
 
   <script>
-  const memoryStore = {
-    name: "DevMaster",
-    aiName: "Wizz",
-    traits: ["Project Commander", "Rules Architect", "Builder of Wizz"],
-    reminders: ["Always follow DevMaster’s instructions"],
-    lastChat: []
-  };
+    const memoryStore = {
+      name: "DevMaster",
+      aiName: "Wizz",
+      traits: ["Project Commander", "Rules Architect", "Builder of Wizz"],
+      reminders: ["Always follow DevMaster’s instructions"],
+      lastChat: []
+    };
 
-  function loadMemory() {
-    const raw = localStorage.getItem("cloudWizzMemory");
-    if (raw) {
-      try {
-        const parsed = JSON.parse(raw);
-        Object.assign(memoryStore, parsed);
-      } catch (e) {
-        console.warn("🧠 Failed to parse memory:", e);
+    function loadMemory() {
+      const raw = localStorage.getItem("cloudWizzMemory");
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          Object.assign(memoryStore, parsed);
+        } catch (e) {
+          console.warn("🧠 Failed to parse memory:", e);
+        }
       }
     }
-  }
-
-  function saveMemory() {
-    localStorage.setItem("cloudWizzMemory", JSON.stringify(memoryStore));
-  }
-
-  function checkMemoryTriggers(input) {
-    const lower = input.toLowerCase();
-
-    if (lower === "what's your name" || lower === "whats your name") {
-      return `🤖 My name is ${memoryStore.aiName || "Wizz"}.`;
-    }
-
-    if (lower === "what's my name" || lower === "whats my name") {
-      return memoryStore.name
-        ? `🧠 You are ${memoryStore.name}, the DevMaster.`
-        : `I don’t know your name yet. Try saying: "My name is DevMaster"`;
-    }
-
-    if (lower.startsWith("my name is ")) {
-      const name = input.split("is ")[1].trim();
-      memoryStore.name = name;
-      saveMemory();
-      return `✅ Got it. I'll call you ${name}.`;
-    }
-
-    if (lower.includes("add trait ")) {
-      const trait = input.split("add trait ")[1].trim();
-      memoryStore.traits.push(trait);
-      saveMemory();
-      return `🧠 Trait "${trait}" added.`;
-    }
-
-    if (lower.includes("add reminder")) {
-      const note = input.split("add reminder")[1].trim();
-      memoryStore.reminders.push(note);
-      saveMemory();
-      return `📌 Reminder added: ${note}`;
-    }
-
-    if (lower.includes("what do you remember") || lower.includes("who am i")) {
-      const name = memoryStore.name || "stranger";
-      const traits = memoryStore.traits.join(", ") || "none";
-      const reminders = memoryStore.reminders.map((r, i) => `• ${r}`).join("\n") || "none";
-      return `👤 You are ${name}.\n🧬 Traits: ${traits}\n📌 Reminders:\n${reminders}`;
-    }
-
-    return null;
-  }
-
-  saveMemory();
-  loadMemory();
-</script>
 
     function saveMemory() {
       localStorage.setItem("cloudWizzMemory", JSON.stringify(memoryStore));
@@ -345,14 +296,16 @@
 
     // 👑 Dev Master Rules Patch
     applyTheme();
-    memoryStore.name = "Dev Master";
+    loadMemory();
+    saveMemory();
+    loadHistory();
     addTrait("Project leader");
     addTrait("Rules Architect");
     addTrait("Builder of Wizz");
     addReminder("Always follow Dev Master's instructions");
-    saveMemory();
-    loadMemory();
-    loadHistory();
   </script>
+
+  <!-- Optional: Load rule logic -->
+  <script src="CloudWizz_RuleCore_v2.js"></script>
 </body>
 </html>
