@@ -178,32 +178,7 @@
       return `👤 You are ${name}.\n🧬 Traits: ${traits}\n📌 Reminders:\n${reminders}`;
     }
 
-    function checkMemoryTriggers(input) {
-      const lower = input.toLowerCase();
-
-      if (lower === "reset wizz" || lower === "flush memory") {
-        localStorage.removeItem("cloudWizzMemory");
-        localStorage.removeItem("wizzChat");
-        return `🧠 SYSTEM SYNC: Cloud Wizz Reset Successful\n🧍 Dev Master active | Memory flushed\n📂 Ready for clean re-activation in new thread`;
-      }
-
-      if (lower.startsWith("my name is ")) {
-        const name = input.split("is ")[1].trim();
-        return rememberName(name);
-      }
-
-      if (lower.startsWith("add trait ")) {
-  const trait = input.substring(10).trim();
-  addTrait(trait);
-  return `🧠 Trait "${trait}" added.`;
-}
-
-if (lower.startsWith("add reminder ")) {
-  const note = input.substring(13).trim();
-  addReminder(note);
-  return `📌 Reminder added: ${note}`;
-}
-
+   
 
       function checkMemoryTriggers(input) {
   const lower = input.toLowerCase();
