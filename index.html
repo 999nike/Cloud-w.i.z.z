@@ -1,4 +1,3 @@
-<!-- File: index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -212,6 +211,11 @@
       return null;
     }
 
+    function createMemoryPrompt(question) {
+      const summary = recallMemorySummary();
+      return `${summary}\n\n${question}`;
+    }
+
     const chatHistory = document.getElementById("chatHistory");
     const typingIndicator = document.getElementById("typingIndicator");
 
@@ -246,7 +250,8 @@
       typingIndicator.innerText = "Wizz is thinking...";
 
       try {
-        const res = await fetch('/api/wizz?question=' + encodeURIComponent(question));
+        const prompt = createMemoryPrompt(question);
+        const res = await fetch('/api/wizz?question=' + encodeURIComponent(prompt));
         const data = await res.json();
         updateLastWizzMessage(data.answer);
         saveToHistory("You", question);
@@ -305,7 +310,6 @@
     addReminder("Always follow Dev Master's instructions");
   </script>
 
-  <!-- Optional: Load rule logic -->
   <script src="CloudWizz_RuleCore_v2.js"></script>
 </body>
 </html>
