@@ -178,51 +178,70 @@
       return `👤 You are ${name}.\n🧬 Traits: ${traits}\n📌 Reminders:\n${reminders}`;
     }
 
-   
+    function checkMemoryTriggers(input) {
+      const lower = input.toLowerCase();
 
-      function checkMemoryTriggers(input) {
-  const lower = input.toLowerCase();
+      if (lower === "reset wizz" || lower === "flush memory") {
+        localStorage.removeItem("cloudWizzMemory");
+        localStorage.removeItem("wizzChat");
+        return `🧠 SYSTEM SYNC: Cloud Wizz Reset Successful\n🧍 Dev Master active | Memory flushed\n📂 Ready for clean re-activation in new thread`;
+      }
 
-  if (lower === "reset wizz" || lower === "flush memory") {
-    localStorage.removeItem("cloudWizzMemory");
-    localStorage.removeItem("wizzChat");
-    return `🧠 SYSTEM SYNC: Cloud Wizz Reset Successful\n🧍 Dev Master active | Memory flushed\n📂 Ready for clean re-activation in new thread`;
-  }
+      if (lower.startsWith("my name is ")) {
+        const name = input.split("is ")[1].trim();
+        return rememberName(name);
+      }
 
-  if (lower.startsWith("my name is ")) {
-    const name = input.split("is ")[1].trim();
-    return rememberName(name);
-  }
-
-  if (lower.startsWith("your name is ")) {
-    const aiName = input.split("is ")[1].trim();
-    memoryStore.aiName = aiName;
-    saveMemory();
-    return `✅ Acknowledged. My name is now ${aiName}.`;
-  }
-
-  if (lower.startsWith("set name to ")) {
-    const aiName = input.split("to ")[1].trim();
-    memoryStore.aiName = aiName;
-    saveMemory();
-    return `✅ Got it. My new name is ${aiName}.`;
-  }
-
-  if (lower.startsWith("add trait ")) {
-    const trait = input.substring(10).trim();
-    addTrait(trait);
-    return `🧠 Trait "${trait}" added.`;
-  }
-
-  if (lower.startsWith("add reminder ")) {
-    const note = input.substring(13).trim();
-    addReminder(note);
-    return `📌 Reminder added: ${note}`;
-  }
-
-  return null;
+      if (lower.startsWith("add trait ")) {
+  const trait = input.substring(10).trim();
+  addTrait(trait);
+  return `🧠 Trait "${trait}" added.`;
 }
 
+if (lower.startsWith("add reminder ")) {
+  const note = input.substring(13).trim();
+  addReminder(note);
+  return `📌 Reminder added: ${note}`;
+}
+
+
+      return null;
+    }
+
+    function createMemoryPrompt(question) {
+      const summary = recallMemorySummary();
+      return `${summary}\n\n${question}`;
+    }
+
+    const chatHistory = document.getElementById("chatHistory");
+    const typingIndicator = document.getElementById("typingIndicator");
+
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle("light");
+      localStorage.setItem("wizzTheme", isLight ? "light" : "dark");
+    }
+
+    function applyTheme() {
+      const saved = localStorage.getItem("wizzTheme");
+      if (saved === "light") document.body.classList.add("light");
+    }
+
+    async function askWizz() {
+      const input = document.getElementById("userInput");
+      const question = input.value.trim();
+      if (!question) return;
+
+      appendMessage("You", question);
+      input.value = "";
+
+      const memoryReply = checkMemoryTriggers(question);
+      if (memoryReply) {
+        appendMessage("Wizz", memoryReply);
+        logChat({ user: question, bot: memoryReply });
+        saveToHistory("You", question);
+        saveToHistory("Wizz", memoryReply);
+        return;
+      }
 
       appendMessage("Wizz", "...");
       typingIndicator.innerText = "Wizz is thinking...";
