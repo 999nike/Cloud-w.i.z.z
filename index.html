@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cloud Wizz Online</title>
+  <title>Cloud Super Wizz Online</title>
   <meta name="description" content="Wizz rules, structure, brains 🧠">
   <link rel="icon" type="image/png" href="frosty.jpg" />
   <style>
@@ -18,23 +18,181 @@
       display: flex;
       flex-direction: column;
     }
+    body.light { background: url('frosty.jpg') no-repeat center center fixed; background-size: cover; color: #111; }
+    h1 { text-align: center; margin: 10px; text-shadow: 0 0 5px #0ff; }
+    #chatContainer { flex: 1; display: flex; flex-direction: column-reverse; overflow-y: auto; padding: 20px; padding-bottom: 120px; }
+    #chatHistory { display: flex; flex-direction: column-reverse; gap: 6px; }
+    .message { max-width: 80%; padding: 10px 15px; border-radius: 12px; line-height: 1.4; word-wrap: break-word; background: rgba(0,0,0,0.6); color: #0ff; }
+    .user { align-self: flex-end; background-color: rgba(0,255,255,0.8); color: #111; border-top-right-radius: 0; }
+    .wizz { align-self: flex-start; border-top-left-radius: 0; }
+    #inputArea { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; padding: 10px; background: rgba(0, 0, 0, 0.9); position: fixed; bottom: 0; width: 100%; z-index: 999; }
+    input { flex: 1 1 60%; padding: 10px; border-radius: 5px; border: none; background: #222; color: #0ff; min-width: 200px; }
+    button { padding: 10px 16px; background: #0ff; border: none; border-radius: 5px; font-weight: bold; color: #111; cursor: pointer; }
+    #typingIndicator { font-style: italic; margin-top: 8px; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>☁️ Cloud Super Wizz Online</h1>
 
-    body.light {
-      background: url('frosty.jpg') no-repeat center center fixed;
-      background-size: cover;
-      color: #111;
+  <div id="chatContainer">
+    <div id="chatHistory"></div>
+    <div id="typingIndicator"></div>
+  </div>
+
+  <div id="inputArea">
+    <input type="text" id="userInput" placeholder="Ask Wizz..." onkeydown="if(event.key==='Enter') askWizz()">
+    <button onclick="askWizz()">Send</button>
+    <!-- 🔒 locked buttons: no wiping -->
+    <button onclick="alert('🚫 Clear Chat locked by DevMaster')">🧼</button>
+    <button onclick="alert('🚫 Clear Memory locked by DevMaster')">🧠</button>
+    <button onclick="toggleTheme()">🌓</button>
+  </div>
+
+  <script>
+    const memoryStore = {
+      name: "DevMaster",
+      aiName: "Super Wizz", // ← renamed
+      traits: ["Project Commander", "Rules Architect", "Builder of Wizz"],
+      reminders: ["Always follow DevMaster’s instructions"],
+      lastChat: []
+    };
+
+    function loadMemory() {
+      const raw = localStorage.getItem("cloudWizzMemory");
+      if (raw) {
+        try { Object.assign(memoryStore, JSON.parse(raw)); }
+        catch (e) { console.warn("🧠 Failed to parse memory:", e); }
+      }
+    }
+    function saveMemory() { localStorage.setItem("cloudWizzMemory", JSON.stringify(memoryStore)); }
+
+    function rememberName(name) { memoryStore.name = name; saveMemory(); return `✅ Got it. I'll call you ${name}.`; }
+    function addTrait(trait) { if (!memoryStore.traits.includes(trait)) memoryStore.traits.push(trait); saveMemory(); }
+    function addReminder(msg) { memoryStore.reminders.push(msg); saveMemory(); }
+    function logChat(entry) { memoryStore.lastChat.push(entry); if (memoryStore.lastChat.length > 20) memoryStore.lastChat.shift(); saveMemory(); }
+
+    function recallMemorySummary() {
+      const name = memoryStore.name || "stranger";
+      const traits = memoryStore.traits.join(", ") || "none";
+      const reminders = memoryStore.reminders.map((r) => `• ${r}`).join("\n") || "none";
+      return `👤 You are ${name}.\n🧬 Traits: ${traits}\n📌 Reminders:\n${reminders}`;
     }
 
-    h1 {
-      text-align: center;
-      margin: 10px;
-      text-shadow: 0 0 5px #0ff;
+    function checkMemoryTriggers(input) {
+      const lower = input.toLowerCase();
+
+      // (Left in place but the buttons are locked, so you won’t hit this by accident)
+      if (lower === "reset wizz" || lower === "flush memory") {
+        localStorage.removeItem("cloudWizzMemory");
+        localStorage.removeItem("wizzChat");
+        return `🧠 SYSTEM SYNC: Cloud Wizz Reset Successful\n🧍 Dev Master active | Memory flushed\n📂 Ready for clean re-activation in new thread`;
+      }
+
+      if (lower.startsWith("my name is ")) {
+        const name = input.split("is ")[1].trim();
+        return rememberName(name);
+      }
+      if (lower.startsWith("add trait ")) {
+        const trait = input.substring(10).trim(); addTrait(trait); return `🧠 Trait "${trait}" added.`;
+      }
+      if (lower.startsWith("add reminder ")) {
+        const note = input.substring(13).trim(); addReminder(note); return `📌 Reminder added: ${note}`;
+      }
+      return null;
     }
 
-    #chatContainer {
-      flex: 1;
-      display: flex;
-      flex-direction: column-reverse;
+    const chatHistory = document.getElementById("chatHistory");
+    const typingIndicator = document.getElementById("typingIndicator");
+
+    function toggleTheme() {
+      const isLight = document.body.classList.toggle("light");
+      localStorage.setItem("wizzTheme", isLight ? "light" : "dark");
+    }
+    function applyTheme() {
+      const saved = localStorage.getItem("wizzTheme");
+      if (saved === "light") document.body.classList.add("light");
+    }
+
+    async function askWizz() {
+      const input = document.getElementById("userInput");
+      const question = input.value.trim();
+      if (!question) return;
+
+      appendMessage("You", question);
+      input.value = "";
+
+      const memoryReply = checkMemoryTriggers(question);
+      if (memoryReply) {
+        appendMessage("Wizz", memoryReply);
+        logChat({ user: question, bot: memoryReply });
+        saveToHistory("You", question);
+        saveToHistory("Wizz", memoryReply);
+        return;
+      }
+
+      appendMessage("Wizz", "...");
+      typingIndicator.innerText = "Wizz is thinking...";
+
+      try {
+        const prompt = createMemoryPrompt(question);
+        const res = await fetch('/api/wizz?question=' + encodeURIComponent(prompt));
+        const data = await res.json();
+        updateLastWizzMessage(data.answer);
+        saveToHistory("You", question);
+        saveToHistory("Wizz", data.answer);
+        logChat({ user: question, bot: data.answer });
+      } catch (err) {
+        updateLastWizzMessage("⚠️ Error: " + err.toString());
+      } finally {
+        typingIndicator.innerText = "";
+      }
+    }
+
+    function createMemoryPrompt(question) {
+      const summary = recallMemorySummary();
+      return `${summary}\n\n${question}`;
+    }
+
+    function appendMessage(sender, message) {
+      const msg = document.createElement("div");
+      msg.classList.add("message", sender === "You" ? "user" : "wizz");
+      msg.innerHTML = `<b>${sender}:</b><br>${message}`;
+      chatHistory.insertBefore(msg, chatHistory.firstChild);
+    }
+    function updateLastWizzMessage(newMsg) {
+      const messages = chatHistory.querySelectorAll("div.message");
+      if (messages.length) messages[0].innerHTML = `<b>Wizz:</b><br>${newMsg}`;
+    }
+    function saveToHistory(sender, msg) {
+      const history = JSON.parse(localStorage.getItem("wizzChat")) || [];
+      history.push({ sender, msg });
+      localStorage.setItem("wizzChat", JSON.stringify(history));
+    }
+    function loadHistory() {
+      const history = JSON.parse(localStorage.getItem("wizzChat")) || [];
+      for (let i = history.length - 1; i >= 0; i--) appendMessage(history[i].sender, history[i].msg);
+    }
+
+    // (Original clear functions remain unused because buttons are locked)
+    function clearChat() { localStorage.removeItem("wizzChat"); chatHistory.innerHTML = ""; }
+    function clearMemory() { localStorage.removeItem("cloudWizzMemory"); alert("🧠 Wizz memory cleared."); }
+
+    // 👑 Dev Master Rules Patch
+    applyTheme();
+    loadMemory();
+    saveMemory();
+    loadHistory();
+    addTrait("Project leader");
+    addTrait("Rules Architect");
+    addTrait("Builder of Wizz");
+    if (!memoryStore.reminders.includes("Always follow Dev Master's instructions")) {
+      addReminder("Always follow Dev Master's instructions");
+    }
+  </script>
+
+  <script src="CloudWizz_RuleCore_v2.js"></script>
+</body>
+</html>      flex-direction: column-reverse;
       overflow-y: auto;
       padding: 20px;
       padding-bottom: 120px;
