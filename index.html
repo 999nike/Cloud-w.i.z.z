@@ -227,7 +227,22 @@ Be concise, direct, encouraging. Follow DevMaster and use the memory summary bel
       try{
         const mode = getMode();
         const outbound = mode==="dm" ? createMemoryPrompt(question) : question;
-        const res = await fetch('/api/wizz?mode='+mode+'&question='+encodeURIComponent(outbound));
+
+        // >>> convo memory: include last few turns <<<
+        const historyArr = (JSON.parse(localStorage.getItem("wizzChat")) || [])
+          .slice(-8)
+          .map(m => ({
+            role: m.sender === "Wizz" ? "assistant" : "user",
+            content: m.msg
+          }));
+
+        const qs = new URLSearchParams({
+          mode,
+          question: outbound,
+          history: JSON.stringify(historyArr)
+        });
+
+        const res = await fetch('/api/wizz?' + qs.toString());
         const data = await res.json();
         updateLastWizzMessage(data.answer || "…");
         saveToHistory("You", question); saveToHistory("Wizz", data.answer || "");
