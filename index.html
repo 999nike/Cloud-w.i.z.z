@@ -184,16 +184,29 @@ Be concise, direct, encouraging. Follow DevMaster and use the memory summary bel
       chatHistory.insertBefore(msg, chatHistory.firstChild);
     }
 
-    function updateLastWizzMessage(newMsg){
-      const messages = chatHistory.querySelectorAll("div.message");
-      if(!messages.length) return;
-      const msg = messages[0];
-      msg.classList.add("wizz");
-      msg.innerHTML = ""; // rebuild safely
-      const head = document.createElement("b"); head.textContent = "Wizz:";
-      const body = document.createElement("div"); body.textContent = newMsg;
-      msg.appendChild(head); msg.appendChild(document.createElement("br")); msg.appendChild(body);
-    }
+    // === Wizz Voice (TTS) helper ===
+function speak(text) {
+  if (!window.speechSynthesis) return; // fallback if not supported
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.lang = "en-GB"; // try en-US if you prefer
+  msg.rate = 1;
+  msg.pitch = 1;
+  window.speechSynthesis.speak(msg);
+}
+
+function updateLastWizzMessage(newMsg){
+  const messages = chatHistory.querySelectorAll("div.message");
+  if(!messages.length) return;
+  const msg = messages[0];
+  msg.classList.add("wizz");
+  msg.innerHTML = ""; // rebuild safely
+  const head = document.createElement("b"); head.textContent = "Wizz:";
+  const body = document.createElement("div"); body.textContent = newMsg;
+  msg.appendChild(head); msg.appendChild(document.createElement("br")); msg.appendChild(body);
+
+  // 🔊 Speak reply out loud
+  speak(newMsg);
+}
 
     function saveToHistory(sender, msg){
       const history = JSON.parse(localStorage.getItem("wizzChat")) || [];
