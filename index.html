@@ -8,25 +8,18 @@
   <link rel="icon" type="image/png" href="frosty.jpg" />
   <style>
     html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
+      margin: 0; padding: 0; height: 100%;
       font-family: Arial, sans-serif;
       background: url('frosty.jpg') no-repeat center center fixed;
-      background-size: cover;
-      color: #0ff;
-      display: flex;
-      flex-direction: column;
+      background-size: cover; color: #0ff;
+      display: flex; flex-direction: column;
     }
-    body.light {
-      background: url('frosty.jpg') no-repeat center center fixed;
-      background-size: cover;
-      color: #111;
-    }
+    body.light { color: #111; }
     h1 { text-align: center; margin: 10px; text-shadow: 0 0 5px #0ff; }
     #chatContainer {
       flex: 1; display: flex; flex-direction: column-reverse;
-      overflow-y: auto; padding: 20px; padding-bottom: 120px;
+      overflow-y: auto; padding: 20px; padding-bottom: 90px; /* lifted messages */
+      box-sizing: border-box;
     }
     #chatHistory { display: flex; flex-direction: column-reverse; gap: 6px; }
     .message {
@@ -41,20 +34,19 @@
     .wizz { align-self: flex-start; border-top-left-radius: 0; }
     #inputArea {
       display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
-      padding: 10px; background: rgba(0, 0, 0, 0.9);
+      padding: 6px 8px; background: rgba(0, 0, 0, 0.9);
       position: fixed; bottom: 0; width: 100%; z-index: 999;
     }
     input {
-      flex: 1 1 60%; padding: 10px; border-radius: 5px; border: none;
-      background: #222; color: #0ff; min-width: 200px;
+      flex: 1 1 60%; min-width: 200px;
+      padding: 8px; font-size: 14px; border-radius: 5px; border: none;
+      background: #222; color: #0ff;
     }
     button {
-      padding: 10px 16px; background: #0ff; border: none; border-radius: 5px;
-      font-weight: bold; color: #111; cursor: pointer;
+      padding: 8px 12px; font-size: 14px; font-weight: bold;
+      background: #0ff; color: #111; border: none; border-radius: 5px; cursor: pointer;
     }
-    button.locked {
-      opacity: 0.6; cursor: not-allowed;
-    }
+    button.locked { opacity: 0.6; cursor: not-allowed; }
     #typingIndicator { font-style: italic; margin-top: 8px; text-align: center; }
   </style>
 </head>
@@ -72,6 +64,9 @@
 
     <!-- 🔐 Lock Toggle -->
     <button id="btnLock" onclick="toggleLock()">🔓 Unlock</button>
+
+    <!-- 🌐/DM Mode Toggle (no 'mode' text) -->
+    <button id="btnMode" onclick="toggleMode()">DM</button>
 
     <!-- Wipe buttons (behavior controlled by lock state) -->
     <button id="btnClearChat" onclick="clearChat()">🧼</button>
@@ -92,10 +87,7 @@
 
     function loadMemory() {
       const raw = localStorage.getItem("cloudWizzMemory");
-      if (raw) {
-        try { Object.assign(memoryStore, JSON.parse(raw)); }
-        catch (e) { console.warn("🧠 Failed to parse memory:", e); }
-      }
+      if (raw) { try { Object.assign(memoryStore, JSON.parse(raw)); } catch(e){ console.warn("🧠 parse memory:", e); } }
     }
     function saveMemory() { localStorage.setItem("cloudWizzMemory", JSON.stringify(memoryStore)); }
     function rememberName(name) { memoryStore.name = name; saveMemory(); return `✅ Got it. I'll call you ${name}.`; }
@@ -106,11 +98,11 @@
     function recallMemorySummary() {
       const name = memoryStore.name || "stranger";
       const traits = memoryStore.traits.join(", ") || "none";
-      const reminders = memoryStore.reminders.map((r) => `• ${r}`).join("\n") || "none";
+      const reminders = memoryStore.reminders.map(r => `• ${r}`).join("\n") || "none";
       return `👤 You are ${name}.\n🧬 Traits: ${traits}\n📌 Reminders:\n${reminders}`;
     }
 
-    // ===== Wizz upgrade: light system prefix (tone/role) =====
+    // ===== System prefix (tone/role) =====
     const SYSTEM_PREFIX =
 `You are Wizz (assistant). DevMaster is the user and project owner.
 Be concise, direct, encouraging; a bit cheeky when it fits. No bland filler.
@@ -143,45 +135,39 @@ Never call yourself DevMaster. Follow DevMaster's instructions and use the memor
     }
 
     function createMemoryPrompt(question) {
-      const summary = recallMemorySummary();
-      return SYSTEM_PREFIX + summary + "\n\n" + question;
+      return SYSTEM_PREFIX + recallMemorySummary() + "\n\n" + question;
     }
 
     // ===== Lock Toggle (persisted) =====
     const LOCK_KEY = "wizzLockEnabled";
-    function isLocked() {
-      return localStorage.getItem(LOCK_KEY) === "true";
-    }
-    function setLocked(v) {
-      localStorage.setItem(LOCK_KEY, v ? "true" : "false");
-      updateLockUI();
-    }
-    function toggleLock() {
-      setLocked(!isLocked());
-    }
-    function updateLockUI() {
+    function isLocked(){ return localStorage.getItem(LOCK_KEY) === "true"; }
+    function setLocked(v){ localStorage.setItem(LOCK_KEY, v ? "true" : "false"); updateLockUI(); }
+    function toggleLock(){ setLocked(!isLocked()); }
+    function updateLockUI(){
       const locked = isLocked();
       const btnLock = document.getElementById("btnLock");
       const btnCC = document.getElementById("btnClearChat");
       const btnCM = document.getElementById("btnClearMemory");
-
       if (btnLock) btnLock.textContent = locked ? "🔐 Locked" : "🔓 Unlock";
-      [btnCC, btnCM].forEach(b => {
-        if (!b) return;
-        if (locked) b.classList.add("locked");
-        else b.classList.remove("locked");
-      });
+      [btnCC, btnCM].forEach(b => { if (!b) return; b.classList.toggle("locked", locked); });
     }
+
+    // ===== Mode Toggle (persisted) =====
+    const MODE_KEY = "wizzMode"; // "dm" | "normal"
+    function getMode(){ return localStorage.getItem(MODE_KEY) === "normal" ? "normal" : "dm"; }
+    function setMode(m){ localStorage.setItem(MODE_KEY, m === "normal" ? "normal" : "dm"); updateModeUI(); appendMessage("Wizz", m === "dm" ? "🔒 DevMaster Mode active." : "🌐 Normal Mode active."); }
+    function toggleMode(){ setMode(getMode() === "dm" ? "normal" : "dm"); }
+    function updateModeUI(){ const btn = document.getElementById("btnMode"); if (btn) btn.textContent = getMode() === "dm" ? "DM" : "🌐"; }
 
     // ===== UI / Chat =====
     const chatHistory = document.getElementById("chatHistory");
     const typingIndicator = document.getElementById("typingIndicator");
 
-    function toggleTheme() {
+    function toggleTheme(){
       const isLight = document.body.classList.toggle("light");
       localStorage.setItem("wizzTheme", isLight ? "light" : "dark");
     }
-    function applyTheme() {
+    function applyTheme(){
       const saved = localStorage.getItem("wizzTheme");
       if (saved === "light") document.body.classList.add("light");
     }
@@ -207,8 +193,9 @@ Never call yourself DevMaster. Follow DevMaster's instructions and use the memor
       typingIndicator.innerText = "Wizz is thinking...";
 
       try {
-        const prompt = createMemoryPrompt(question);
-        const res = await fetch('/api/wizz?question=' + encodeURIComponent(prompt));
+        const mode = getMode();
+        const outbound = mode === "dm" ? createMemoryPrompt(question) : question;
+        const res = await fetch('/api/wizz?mode=' + mode + '&question=' + encodeURIComponent(outbound));
         const data = await res.json();
         updateLastWizzMessage(data.answer);
         saveToHistory("You", question);
@@ -227,18 +214,15 @@ Never call yourself DevMaster. Follow DevMaster's instructions and use the memor
       msg.innerHTML = `<b>${sender}:</b><br>${message}`;
       chatHistory.insertBefore(msg, chatHistory.firstChild);
     }
-
     function updateLastWizzMessage(newMsg) {
       const messages = chatHistory.querySelectorAll("div.message");
       if (messages.length) messages[0].innerHTML = `<b>Wizz:</b><br>${newMsg}`;
     }
-
     function saveToHistory(sender, msg) {
       const history = JSON.parse(localStorage.getItem("wizzChat")) || [];
       history.push({ sender, msg });
       localStorage.setItem("wizzChat", JSON.stringify(history));
     }
-
     function loadHistory() {
       const history = JSON.parse(localStorage.getItem("wizzChat")) || [];
       for (let i = history.length - 1; i >= 0; i--) appendMessage(history[i].sender, history[i].msg);
@@ -262,17 +246,12 @@ Never call yourself DevMaster. Follow DevMaster's instructions and use the memor
     loadMemory();
     saveMemory();
     loadHistory();
-
-    // init lock state + UI
-    if (localStorage.getItem(LOCK_KEY) === null) setLocked(true); // default to LOCKED for safety
+    if (localStorage.getItem(LOCK_KEY) === null) setLocked(true); // default LOCKED
     updateLockUI();
-
-    addTrait("Project leader");
-    addTrait("Rules Architect");
-    addTrait("Builder of Wizz");
-    if (!memoryStore.reminders.includes("Always follow Dev Master's instructions")) {
-      addReminder("Always follow Dev Master's instructions");
-    }
+    if (localStorage.getItem(MODE_KEY) === null) setMode("dm");   // default DM
+    updateModeUI();
+    addTrait("Project leader"); addTrait("Rules Architect"); addTrait("Builder of Wizz");
+    if (!memoryStore.reminders.includes("Always follow Dev Master's instructions")) addReminder("Always follow Dev Master's instructions");
   </script>
 
   <script src="CloudWizz_RuleCore_v2.js"></script>
