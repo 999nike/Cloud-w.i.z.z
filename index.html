@@ -40,7 +40,7 @@
     }
     .wizz { align-self: flex-start; border-top-left-radius: 0; }
     #inputArea {
-      display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 6px;
       padding: 10px; background: rgba(0, 0, 0, 0.9);
       position: fixed; bottom: 0; width: 100%; z-index: 999;
     }
@@ -51,6 +51,9 @@
     button {
       padding: 10px 16px; background: #0ff; border: none; border-radius: 5px;
       font-weight: bold; color: #111; cursor: pointer;
+    }
+    button.locked {
+      opacity: 0.6; cursor: not-allowed;
     }
     #typingIndicator { font-style: italic; margin-top: 8px; text-align: center; }
   </style>
@@ -66,9 +69,14 @@
   <div id="inputArea">
     <input type="text" id="userInput" placeholder="Ask Wizz..." onkeydown="if(event.key==='Enter') askWizz()">
     <button onclick="askWizz()">Send</button>
-    <!-- 🔒 locked buttons -->
-    <button onclick="alert('🚫 Clear Chat locked by DevMaster')">🧼</button>
-    <button onclick="alert('🚫 Clear Memory locked by DevMaster')">🧠</button>
+
+    <!-- 🔐 Lock Toggle -->
+    <button id="btnLock" onclick="toggleLock()">🔓 Unlock</button>
+
+    <!-- Wipe buttons (behavior controlled by lock state) -->
+    <button id="btnClearChat" onclick="clearChat()">🧼</button>
+    <button id="btnClearMemory" onclick="clearMemory()">🧠</button>
+
     <button onclick="toggleTheme()">🌓</button>
   </div>
 
@@ -137,6 +145,32 @@ Never call yourself DevMaster. Follow DevMaster's instructions and use the memor
     function createMemoryPrompt(question) {
       const summary = recallMemorySummary();
       return SYSTEM_PREFIX + summary + "\n\n" + question;
+    }
+
+    // ===== Lock Toggle (persisted) =====
+    const LOCK_KEY = "wizzLockEnabled";
+    function isLocked() {
+      return localStorage.getItem(LOCK_KEY) === "true";
+    }
+    function setLocked(v) {
+      localStorage.setItem(LOCK_KEY, v ? "true" : "false");
+      updateLockUI();
+    }
+    function toggleLock() {
+      setLocked(!isLocked());
+    }
+    function updateLockUI() {
+      const locked = isLocked();
+      const btnLock = document.getElementById("btnLock");
+      const btnCC = document.getElementById("btnClearChat");
+      const btnCM = document.getElementById("btnClearMemory");
+
+      if (btnLock) btnLock.textContent = locked ? "🔐 Locked" : "🔓 Unlock";
+      [btnCC, btnCM].forEach(b => {
+        if (!b) return;
+        if (locked) b.classList.add("locked");
+        else b.classList.remove("locked");
+      });
     }
 
     // ===== UI / Chat =====
@@ -210,15 +244,29 @@ Never call yourself DevMaster. Follow DevMaster's instructions and use the memor
       for (let i = history.length - 1; i >= 0; i--) appendMessage(history[i].sender, history[i].msg);
     }
 
-    // (Original clear functions kept, but buttons are locked and don't call them)
-    function clearChat() { localStorage.removeItem("wizzChat"); chatHistory.innerHTML = ""; }
-    function clearMemory() { localStorage.removeItem("cloudWizzMemory"); alert("🧠 Wizz memory cleared."); }
+    // ===== Wipe actions (respect lock) =====
+    function clearChat() {
+      if (isLocked()) return alert("🚫 Locked by DevMaster");
+      localStorage.removeItem("wizzChat");
+      chatHistory.innerHTML = "";
+      alert("🧼 Chat cleared.");
+    }
+    function clearMemory() {
+      if (isLocked()) return alert("🚫 Locked by DevMaster");
+      localStorage.removeItem("cloudWizzMemory");
+      alert("🧠 Wizz memory cleared.");
+    }
 
     // ===== Boot =====
     applyTheme();
     loadMemory();
     saveMemory();
     loadHistory();
+
+    // init lock state + UI
+    if (localStorage.getItem(LOCK_KEY) === null) setLocked(true); // default to LOCKED for safety
+    updateLockUI();
+
     addTrait("Project leader");
     addTrait("Rules Architect");
     addTrait("Builder of Wizz");
@@ -230,4 +278,3 @@ Never call yourself DevMaster. Follow DevMaster's instructions and use the memor
   <script src="CloudWizz_RuleCore_v2.js"></script>
 </body>
 </html>
-```0
