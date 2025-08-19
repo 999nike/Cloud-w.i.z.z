@@ -1,6 +1,6 @@
 // File: api/wizz.js
 // Vercel serverless (Node 18+): uses global fetch.
-// Env needed: OPENROUTER_API_KEY  (optional: OPENROUTER_MODEL, OPENROUTER_REFERER, OPENROUTER_TITLE)
+// Env: OPENROUTER_API_KEY  (optional: OPENROUTER_MODEL, OPENROUTER_REFERER, OPENROUTER_TITLE)
 
 const DEFAULT_MODEL = process.env.OPENROUTER_MODEL   || "openai/gpt-4o-mini";
 const API_KEY       = process.env.OPENROUTER_API_KEY || "";
@@ -22,16 +22,28 @@ Prefer vanilla JS/HTML/CSS unless a stack is specified.
 Do not invent file paths or extra files unless requested.
 `.trim();
 
-// -----------------------------------------------------------------------------
-// small helpers
+// --- helpers ----------------------------------------------------------------
 function readJson(body) {
-  try { return typeof body === "string" ? JSON.parse(body) : body || {}; }
+  try { return typeof body === "string" ? JSON.parse(body) : (body || {}); }
   catch { return {}; }
 }
 function pick(req, key, fallback = "") {
-  // read from POST JSON or query string
   const b = readJson(req.body);
   return (b && b[key] != null ? String(b[key]) : String(req.query[key] ?? fallback));
+}
+// Parse `history` param (JSON: [{role:"user"|"assistant", content:"..."}])
+function readHistory(req) {
+  const b = readJson(req.body);
+  const raw = (b.history ?? req.query.history ?? "[]").toString();
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    // keep last 20, sanitize, map roles
+    return arr.slice(-20).map(m => ({
+      role: m.role === "assistant" ? "assistant" : "user",
+      content: String(m.content ?? "").slice(0, 4000)
+    }));
+  } catch { return []; }
 }
 
 module.exports = async (req, res) => {
@@ -49,27 +61,25 @@ module.exports = async (req, res) => {
       question = String(req.query.question || "");
     }
     const q = question.trim();
-    if (!q) {
-      return res.status(200).json({ answer: "Ask me something, DevMaster." });
-    }
+    if (!q) return res.status(200).json({ answer: "Ask me something, DevMaster." });
 
-    // Mode toggle: "chat" (default) or "coder"
+    // Mode: "chat" (default) or "coder"
     const mode  = pick(req, "mode", "chat").toLowerCase();
     const model = pick(req, "model", DEFAULT_MODEL) || DEFAULT_MODEL;
 
-    const system = mode === "coder"
-      ? `${BASE_SYSTEM}\n\n${CODER_SYSTEM}`
-      : BASE_SYSTEM;
-
-    // Slightly different generation style by mode
+    const system = mode === "coder" ? `${BASE_SYSTEM}\n\n${CODER_SYSTEM}` : BASE_SYSTEM;
     const temperature = mode === "coder" ? 0.2 : 0.5;
     const max_tokens  = mode === "coder" ? 900 : 300;
+
+    // 🧠 conversation memory (front-end supplies last turns via ?history=[])
+    const history = readHistory(req);
 
     const payload = {
       model,
       messages: [
         { role: "system", content: system },
-        { role: "user",   content: q }
+        ...history,                     // << keep context
+        { role: "user", content: q }    // current message
       ],
       temperature,
       max_tokens
@@ -87,29 +97,20 @@ module.exports = async (req, res) => {
     });
 
     const raw = await r.text();
-
-    // Parse response safely
     let reply = "";
     try {
       const data = JSON.parse(raw);
       reply = data?.choices?.[0]?.message?.content?.trim() || "";
     } catch {
-      // Non‑JSON (rare): return raw so you can see what's wrong in logs
       return res.status(502).json({ answer: "Wizz: Could not parse model response.\n" + raw });
     }
 
-    if (!reply) {
-      return res.status(502).json({ answer: "Wizz: Empty reply from model." });
-    }
+    if (!reply) return res.status(502).json({ answer: "Wizz: Empty reply from model." });
 
-    // In coder mode, try to keep ONLY the code block if one exists
+    // In coder mode, prefer returning only the first code block if present
     if (mode === "coder") {
       const codeBlock = reply.match(/```[\s\S]*?```/);
-      if (codeBlock) {
-        // return only the code fence content as-is
-        return res.status(200).json({ answer: codeBlock[0] });
-      }
-      // otherwise just return the reply (maybe it wasn't a code request)
+      if (codeBlock) return res.status(200).json({ answer: codeBlock[0] });
     }
 
     return res.status(200).json({ answer: reply });
