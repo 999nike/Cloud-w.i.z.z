@@ -5,9 +5,7 @@
     { "src": "api/*.js", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/CloudWizz_RuleCore_v2.js", "dest": "/CloudWizz_RuleCore_v2.js" },
-    { "src": "/api/wizz",  "dest": "/api/wizz.js" },
-    { "src": "/api/rules", "dest": "/api/rules.js" },
+    { "src": "/api/(.*)", "dest": "/api/wizz.js" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
