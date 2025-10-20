@@ -1,31 +1,13 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "api/*.js",
-      "use": "@vercel/node"
-    }
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "api/*.js", "use": "@vercel/node" }
   ],
   "routes": [
-    {
-      "src": "/CloudWizz_RuleCore_v2.js",
-      "dest": "/CloudWizz_RuleCore_v2.js"
-    },
-    {
-      "src": "/api/wizz",
-      "dest": "/api/wizz.js"
-    },
-    {
-      "src": "/api/rules",
-      "dest": "/api/rules.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
+    { "src": "/CloudWizz_RuleCore_v2.js", "dest": "/CloudWizz_RuleCore_v2.js" },
+    { "src": "/api/wizz",  "dest": "/api/wizz.js" },
+    { "src": "/api/rules", "dest": "/api/rules.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
