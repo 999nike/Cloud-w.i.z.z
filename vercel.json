@@ -5,7 +5,18 @@
     { "src": "api/*.js", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "/api/wizz.js" },
-    { "src": "/(.*)", "dest": "/index.html" }
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/wizz.js"
+    },
+    {
+      "src": "/(.*)\\.js",
+      "headers": { "Content-Type": "application/javascript" },
+      "dest": "/$1.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
   ]
 }
