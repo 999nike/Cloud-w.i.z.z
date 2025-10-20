@@ -9,7 +9,7 @@
     { "src": "/api/wizz",  "dest": "/api/wizz.js" },
     { "src": "/api/rules", "dest": "/api/rules.js" },
 
-    /* ⚠️ keep this LAST so it doesn’t override everything */
+    
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
