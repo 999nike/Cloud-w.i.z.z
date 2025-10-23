@@ -62,10 +62,11 @@ function clearMemory() {
     Object.assign(memoryStore, {
       name: "DevMaster",
       theme: "dark",
-      traits: [],
-      reminders: [],
+      traits: ["Builder", "Rules Architect", "Project Leader"],
+      reminders: ["Always follow DevMaster's instructions"],
       lastChat: []
     });
+    saveMemory();
     console.log("🧹 Memory cleared and reset.");
   } catch (err) {
     console.error("⚠️ Memory clear error:", err);
@@ -79,3 +80,6 @@ window.saveMemory = saveMemory;
 window.addTrait = addTrait;
 window.addReminder = addReminder;
 window.clearMemory = clearMemory;
+
+console.log("✅ CloudWizz memory.js loaded and ready.");
+
