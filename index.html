@@ -270,15 +270,18 @@ function updateLastWizzMessage(newMsg){
     // ===== Wipe actions (respect lock) =====
     function clearChat(){
       if(isLocked()) return alert("🚫 Locked by DevMaster");
-      localStorage.removeItem("wizzChat"); chatHistory.innerHTML = ""; alert("🧼 Chat cleared.");
-    }
-    function clearMemory(){
-      if(isLocked()) return alert("🚫 Locked by DevMaster");
-      localStorage.removeItem("cloudWizzMemory"); alert("🧠 Wizz memory cleared.");
+      localStorage.removeItem("wizzChat");
+      chatHistory.innerHTML = "";
+      alert("🧼 Chat cleared.");
     }
 
-     <!-- ===== Boot ===== -->
-  <script>
+    function clearMemory(){
+      if(isLocked()) return alert("🚫 Locked by DevMaster");
+      localStorage.removeItem("cloudWizzMemory");
+      alert("🧠 Wizz memory cleared.");
+    }
+
+    // ===== Boot =====
     applyTheme();
     loadMemory();
     saveMemory();
@@ -299,9 +302,8 @@ function updateLastWizzMessage(newMsg){
   </script>
 
   <!-- ===== Correct Script Load Order ===== -->
-<script src="public/memory.js"></script>
-<script src="/api/rulecore"></script>
-
+  <script src="public/memory.js"></script>
+  <script src="/api/rulecore"></script>
 </body>
 </html>
 
