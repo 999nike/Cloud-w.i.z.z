@@ -88,27 +88,7 @@
   </div>
 
   <script>
-    // ===== Memory =====
-    const memoryStore = {
-      name: "DevMaster",
-      aiName: "Wizz",
-      traits: ["Project Commander","Rules Architect","Builder of Wizz"],
-      reminders: ["Always follow DevMaster’s instructions"],
-      lastChat: []
-    };
-    function loadMemory(){ const raw = localStorage.getItem("cloudWizzMemory"); if(raw){ try{ Object.assign(memoryStore, JSON.parse(raw)); }catch(e){ console.warn("🧠 parse fail", e); } } }
-    function saveMemory(){ localStorage.setItem("cloudWizzMemory", JSON.stringify(memoryStore)); }
-    function rememberName(n){ memoryStore.name = n; saveMemory(); return `✅ Got it. I'll call you ${n}.`; }
-    function addTrait(t){ if(!memoryStore.traits.includes(t)) memoryStore.traits.push(t); saveMemory(); }
-    function addReminder(r){ memoryStore.reminders.push(r); saveMemory(); }
-    function logChat(entry){ memoryStore.lastChat.push(entry); if(memoryStore.lastChat.length>20) memoryStore.lastChat.shift(); saveMemory(); }
-    function recallMemorySummary(){
-      const name = memoryStore.name || "stranger";
-      const traits = (memoryStore.traits||[]).join(", ") || "none";
-      const reminders = (memoryStore.reminders||[]).map(r=>`• ${r}`).join("\n") || "none";
-      return `👤 You are ${name}.\n🧬 Traits: ${traits}\n📌 Reminders:\n${reminders}`;
-    }
-
+    
     // ===== System prefix (tone) =====
     const SYSTEM_PREFIX = `You are Wizz (assistant). DevMaster is the user and project owner.
 Be concise, direct, encouraging. Follow DevMaster and use the memory summary below.\n\n`;
