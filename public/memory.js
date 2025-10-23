@@ -73,6 +73,17 @@ function clearMemory() {
   }
 }
 
+// === Recall Memory Summary ===
+function recallMemorySummary() {
+  const name = memoryStore.name || "DevMaster";
+  const traits = memoryStore.traits.length ? memoryStore.traits.join(", ") : "none";
+  const reminders = memoryStore.reminders.length
+    ? memoryStore.reminders.map(r => `• ${r}`).join("\n")
+    : "none";
+
+  return `👤 You are ${name}.\n🧬 Traits: ${traits}\n📌 Reminders:\n${reminders}`;
+}
+
 // === Export (Browser Global) ===
 window.memoryStore = memoryStore;
 window.loadMemory = loadMemory;
@@ -80,6 +91,6 @@ window.saveMemory = saveMemory;
 window.addTrait = addTrait;
 window.addReminder = addReminder;
 window.clearMemory = clearMemory;
+window.recallMemorySummary = recallMemorySummary;
 
 console.log("✅ CloudWizz memory.js loaded and ready.");
-
