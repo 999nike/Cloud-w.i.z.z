@@ -282,11 +282,86 @@ function updateLastWizzMessage(newMsg){
       addReminder("Always follow Dev Master's instructions");
   </script>
 
-  <!-- ===== Correct Script Load Order ===== -->
+  <!-- ===== Correct Script Load Order (helpers FIRST) ===== -->
   <script src="/memory.js"></script>
-<script src="/api/rulecore"></script>
+  <script src="/api/rulecore"></script>
+
+  <script>
+    // ===== Boot =====
+    applyTheme();
+    loadMemory();
+    saveMemory();
+    loadHistory();
+
+    if (localStorage.getItem("wizzLockEnabled") === null) setLocked(true);
+    else updateLockUI();
+
+    if (localStorage.getItem("wizzMode") === null) setMode("dm");
+    else updateModeUI();
+
+    addTrait("Project leader");
+    addTrait("Rules Architect");
+    addTrait("Builder of Wizz");
+
+    if (!memoryStore.reminders.includes("Always follow Dev Master's instructions")) {
+      addReminder("Always follow Dev Master's instructions");
+    }
+
+    // ===== askWizz (single reply) =====
+    async function askWizz(){
+      const input = document.getElementById("userInput");
+      const question = input.value.trim();
+      if(!question) return;
+
+      appendMessage("You", question);
+      input.value = "";
+
+      const memoryReply = checkMemoryTriggers(question);
+      if (memoryReply){
+        appendMessage("Wizz", memoryReply);
+        logChat({ user:question, bot:memoryReply });
+        saveToHistory("You", question); 
+        saveToHistory("Wizz", memoryReply);
+        return;
+      }
+
+      appendMessage("Wizz", "...");
+      typingIndicator.textContent = "Wizz is thinking...";
+
+      try{
+        const mode = getMode();
+        const outbound = mode==="dm" ? createMemoryPrompt(question) : question;
+
+        // include last few turns
+        const historyArr = (JSON.parse(localStorage.getItem("wizzChat")) || [])
+          .slice(-8)
+          .map(m => ({
+            role: m.sender === "Wizz" ? "assistant" : "user",
+            content: m.msg
+          }));
+
+        const qs = new URLSearchParams({
+          mode,
+          question: outbound,
+          history: JSON.stringify(historyArr)
+        });
+
+        const res = await fetch('/api/wizz?' + qs.toString());
+        const data = await res.json();
+
+        // ✅ ONE reply line only (no duplicate appendMessage here)
+        updateLastWizzMessage(data.answer || "…");
+
+        saveToHistory("You", question);
+        saveToHistory("Wizz", data.answer || "");
+        logChat({ user:question, bot:data.answer || "" });
+      }catch(err){
+        updateLastWizzMessage("⚠️ Error: " + err.toString());
+      }finally{
+        typingIndicator.textContent = "";
+      }
+    }
+  </script>
 </body>
 </html>
-
-
 
