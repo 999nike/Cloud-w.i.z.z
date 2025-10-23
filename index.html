@@ -238,6 +238,7 @@ function updateLastWizzMessage(newMsg){
         const res = await fetch('/api/wizz?' + qs.toString());
         const data = await res.json();
         updateLastWizzMessage(data.answer || "…");
+        appendMessage("Wizz", data.answer || "…");
         saveToHistory("You", question); saveToHistory("Wizz", data.answer || "");
         logChat({ user:question, bot:data.answer || "" });
       }catch(err){
