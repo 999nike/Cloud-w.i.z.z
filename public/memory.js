@@ -1,59 +1,40 @@
-/* File: memory.js — CloudWizz v4.0 Local Memory System */
+/* Wizz Memory Diagnostic v1.0 */
 
-const memoryStore = {
-  name: "DevMaster",
-  theme: "dark",
-  traits: ["Builder", "Rules Architect", "Project Leader"],
-  reminders: ["Always follow DevMaster's instructions"],
-  lastChat: []
-};
+let memoryStore = {};
 
-// === Load Memory ===
 function loadMemory() {
   try {
-    const saved = localStorage.getItem("wizzMemory");
-    if (saved) Object.assign(memoryStore, JSON.parse(saved));
-    console.log("🧠 Memory loaded:", memoryStore);
+    const stored = localStorage.getItem("memoryStore");
+    memoryStore = stored ? JSON.parse(stored) : {};
+    console.log("✅ Wizz Memory loaded:", memoryStore);
   } catch (err) {
-    console.error("Memory load error:", err);
+    console.error("❌ loadMemory error:", err);
   }
 }
 
-// === Save Memory ===
 function saveMemory() {
   try {
-    localStorage.setItem("wizzMemory", JSON.stringify(memoryStore));
-    console.log("💾 Memory saved.");
+    localStorage.setItem("memoryStore", JSON.stringify(memoryStore));
+    console.log("💾 Memory saved:", memoryStore);
   } catch (err) {
-    console.error("Memory save error:", err);
+    console.error("❌ saveMemory error:", err);
   }
 }
 
-// === Add Trait ===
-function addTrait(trait) {
-  if (!memoryStore.traits.includes(trait)) {
-    memoryStore.traits.push(trait);
-    saveMemory();
-    console.log("✨ Trait added:", trait);
-  }
-}
-
-// === Add Reminder ===
-function addReminder(msg) {
-  memoryStore.reminders.push(msg);
-  saveMemory();
-  console.log("🔔 Reminder added:", msg);
-}
-
-// === Clear Memory ===
 function clearMemory() {
-  localStorage.removeItem("wizzMemory");
-  Object.assign(memoryStore, {
-    name: "DevMaster",
-    theme: "dark",
-    traits: [],
-    reminders: [],
-    lastChat: []
-  });
-  console.log("🧹 Memory cleared and reset.");
+  localStorage.removeItem("memoryStore");
+  memoryStore = {};
+  console.log("🧹 Memory cleared");
 }
+
+function addTrait(key, value = true) {
+  memoryStore[key] = value;
+  saveMemory();
+  console.log(`✨ Trait added: ${key} = ${value}`);
+}
+
+/* Auto-init when DOM is ready */
+window.addEventListener("DOMContentLoaded", () => {
+  console.log("🧠 Wizz memory.js loaded into DOM");
+  loadMemory();
+});
