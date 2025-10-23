@@ -1,24 +1,26 @@
 // /api/rulecore.js
-import fs from "fs";
+import { promises as fs } from "fs";
 import path from "path";
 
-export default function handler(req, res) {
+export default async function handler(req, res) {
   try {
-    // Safe absolute path — compatible with Vercel runtime
-    const rulecorePath = path.resolve("./public/CloudWizz_RuleCore_v2.js");
+    // Build the absolute path to the public file
+    const filePath = path.join(process.cwd(), "public", "CloudWizz_RuleCore_v2.js");
 
-    // Confirm file exists before read
-    if (!fs.existsSync(rulecorePath)) {
-      return res.status(404).json({ error: "RuleCore file not found", path: rulecorePath });
-    }
+    // Read the file contents
+    const js = await fs.readFile(filePath, "utf8");
 
-    const js = fs.readFileSync(rulecorePath, "utf8");
+    // Return as JavaScript
     res.setHeader("Content-Type", "application/javascript");
     res.status(200).send(js);
   } catch (err) {
+    console.error("❌ RuleCore load failed:", err.message);
     res.status(500).json({
       error: "RuleCore load failed",
       details: err.message,
+      attemptedPath: path.join(process.cwd(), "public", "CloudWizz_RuleCore_v2.js"),
     });
   }
 }
+
+
