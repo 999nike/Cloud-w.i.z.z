@@ -277,15 +277,30 @@ function updateLastWizzMessage(newMsg){
       localStorage.removeItem("cloudWizzMemory"); alert("🧠 Wizz memory cleared.");
     }
 
-    // ===== Boot =====
+     <!-- ===== Boot ===== -->
+  <script>
     applyTheme();
-    loadMemory(); saveMemory(); loadHistory();
-    if(localStorage.getItem(LOCK_KEY)===null) setLocked(true); else updateLockUI();
-    if(localStorage.getItem(MODE_KEY)===null) setMode("dm"); else updateModeUI();
-    addTrait("Project leader"); addTrait("Rules Architect"); addTrait("Builder of Wizz");
-    if(!memoryStore.reminders.includes("Always follow Dev Master's instructions")) addReminder("Always follow Dev Master's instructions");
+    loadMemory();
+    saveMemory();
+    loadHistory();
+
+    if (localStorage.getItem(LOCK_KEY) === null) setLocked(true);
+    else updateLockUI();
+
+    if (localStorage.getItem(MODE_KEY) === null) setMode("dm");
+    else updateModeUI();
+
+    addTrait("Project leader");
+    addTrait("Rules Architect");
+    addTrait("Builder of Wizz");
+
+    if (!memoryStore.reminders.includes("Always follow Dev Master's instructions"))
+      addReminder("Always follow Dev Master's instructions");
   </script>
-  <script src="/api/rulecore"></script>
-  
+
+  <!-- ===== Correct Script Load Order ===== -->
+  <script src="memory.js"></script>
+  <script src="CloudWizz_RuleCore_v2.js"></script>
 </body>
 </html>
+
