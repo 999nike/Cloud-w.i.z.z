@@ -287,12 +287,9 @@ function updateLastWizzMessage(newMsg){
     addReminder("Always follow Dev Master's instructions");
 </script>
 
-<script src="memory.js"></script>
-<script>
-  loadMemory();
-  console.log("Loaded Memory:", memoryStore);
-</script>
-<script src="/api/rulecore"></script>
+<!-- memory.js must load after main scripts -->
+<script src="memory.js" defer></script>
+<script src="/api/rulecore.js" defer></script>
 
 </body>
 </html>
