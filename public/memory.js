@@ -84,6 +84,18 @@ function recallMemorySummary() {
   return `👤 You are ${name}.\n🧬 Traits: ${traits}\n📌 Reminders:\n${reminders}`;
 }
 
+// === Log Chat ===
+function logChat(entry) {
+  try {
+    memoryStore.lastChat.push(entry);
+    if (memoryStore.lastChat.length > 20) memoryStore.lastChat.shift(); // keep short
+    saveMemory();
+    console.log("💬 Chat logged:", entry);
+  } catch (err) {
+    console.error("⚠️ logChat error:", err);
+  }
+}
+
 // === Export (Browser Global) ===
 window.memoryStore = memoryStore;
 window.loadMemory = loadMemory;
@@ -92,5 +104,6 @@ window.addTrait = addTrait;
 window.addReminder = addReminder;
 window.clearMemory = clearMemory;
 window.recallMemorySummary = recallMemorySummary;
+window.logChat = logChat;
 
 console.log("✅ CloudWizz memory.js loaded and ready.");
