@@ -287,30 +287,37 @@ function updateLastWizzMessage(newMsg){
   <script src="/api/rulecore"></script>
 
   <script>
-  // ===== Boot (Safe Loader) =====
-function safeBoot(){
-  if (typeof loadMemory !== "function") {
-    console.warn("⏳ memory.js not ready yet – retrying...");
-    return setTimeout(safeBoot, 300);
+  // ===== Final Boot Loader =====
+setTimeout(() => {
+  try {
+    if (typeof loadMemory !== "function") {
+      console.warn("⚠️ memory.js not ready yet — retrying...");
+      return location.reload();
+    }
+
+    applyTheme();
+    loadMemory();
+    saveMemory();
+    loadHistory();
+
+    if (localStorage.getItem("wizzLockEnabled") === null) setLocked(true);
+    else updateLockUI();
+
+    if (localStorage.getItem("wizzMode") === null) setMode("dm");
+    else updateModeUI();
+
+    addTrait("Project leader");
+    addTrait("Rules Architect");
+    addTrait("Builder of Wizz");
+
+    if (!memoryStore.reminders.includes("Always follow Dev Master's instructions"))
+      addReminder("Always follow Dev Master's instructions");
+
+    console.log("✅ Wizz booted clean, memory.js detected.");
+  } catch (err) {
+    console.error("💀 Boot error:", err);
   }
-
-  applyTheme();
-  loadMemory();
-  saveMemory();
-  loadHistory();
-
-  if (localStorage.getItem("wizzLockEnabled") === null) setLocked(true);
-  else updateLockUI();
-
-  if (localStorage.getItem("wizzMode") === null) setMode("dm");
-  else updateModeUI();
-
-  addTrait("Project leader");
-  addTrait("Rules Architect");
-  addTrait("Builder of Wizz");
-
-  if (!memoryStore.reminders.includes("Always follow Dev Master's instructions"))
-    addReminder("Always follow Dev Master's instructions");
+}, 400);
 
   console.log("✅ Boot complete");
 }
