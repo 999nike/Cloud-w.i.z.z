@@ -282,21 +282,17 @@ function updateLastWizzMessage(newMsg){
       addReminder("Always follow Dev Master's instructions");
   </script>
 
-  <!-- ===== Correct Script Load Order (helpers FIRST) ===== -->
+ <!-- ===== Correct Script Load Order (helpers FIRST) ===== -->
   <script src="/memory.js"></script>
   <script src="/api/rulecore"></script>
 
   <script>
-  // ===== Final Boot Loader =====
-setTimeout(() => {
-  try {
-    if (typeof loadMemory !== "function") {
-      console.warn("⚠️ memory.js not ready yet — retrying...");
-      return location.reload();
-    }
+  /* ---------- Safe boot: runs ONLY after memory.js is loaded ---------- */
+  (function boot(){
+    if (typeof window.loadMemory !== "function") { setTimeout(boot, 150); return; }
 
     applyTheme();
-    loadMemory();
+    loadMemory();            // now exists (from memory.js)
     saveMemory();
     loadHistory();
 
@@ -310,74 +306,62 @@ setTimeout(() => {
     addTrait("Rules Architect");
     addTrait("Builder of Wizz");
 
-    if (!memoryStore.reminders.includes("Always follow Dev Master's instructions"))
+    if (!((memoryStore.reminders||[]).includes("Always follow Dev Master's instructions"))) {
       addReminder("Always follow Dev Master's instructions");
-
-    console.log("✅ Wizz booted clean, memory.js detected.");
-  } catch (err) {
-    console.error("💀 Boot error:", err);
-  }
-}, 400);
-
-  console.log("✅ Boot complete");
-}
-
-safeBoot(); // 👈 This replaces the direct boot calls
-    // ===== askWizz (single reply) =====
-    async function askWizz(){
-      const input = document.getElementById("userInput");
-      const question = input.value.trim();
-      if(!question) return;
-
-      appendMessage("You", question);
-      input.value = "";
-
-      const memoryReply = checkMemoryTriggers(question);
-      if (memoryReply){
-        appendMessage("Wizz", memoryReply);
-        logChat({ user:question, bot:memoryReply });
-        saveToHistory("You", question); 
-        saveToHistory("Wizz", memoryReply);
-        return;
-      }
-
-      appendMessage("Wizz", "...");
-      typingIndicator.textContent = "Wizz is thinking...";
-
-      try{
-        const mode = getMode();
-        const outbound = mode==="dm" ? createMemoryPrompt(question) : question;
-
-        // include last few turns
-        const historyArr = (JSON.parse(localStorage.getItem("wizzChat")) || [])
-          .slice(-8)
-          .map(m => ({
-            role: m.sender === "Wizz" ? "assistant" : "user",
-            content: m.msg
-          }));
-
-        const qs = new URLSearchParams({
-          mode,
-          question: outbound,
-          history: JSON.stringify(historyArr)
-        });
-
-        const res = await fetch('/api/wizz?' + qs.toString());
-        const data = await res.json();
-
-        // ✅ ONE reply line only (no duplicate appendMessage here)
-        updateLastWizzMessage(data.answer || "…");
-
-        saveToHistory("You", question);
-        saveToHistory("Wizz", data.answer || "");
-        logChat({ user:question, bot:data.answer || "" });
-      }catch(err){
-        updateLastWizzMessage("⚠️ Error: " + err.toString());
-      }finally{
-        typingIndicator.textContent = "";
-      }
     }
+    console.log("✅ Wizz booted clean.");
+  })();
+
+  /* ---------- askWizz: single reply (NO double append) ---------- */
+  async function askWizz(){
+    const input = document.getElementById("userInput");
+    const question = (input.value || "").trim();
+    if (!question) return;
+
+    appendMessage("You", question);
+    input.value = "";
+
+    const memoryReply = checkMemoryTriggers(question);
+    if (memoryReply){
+      appendMessage("Wizz", memoryReply);
+      logChat({ user: question, bot: memoryReply });
+      saveToHistory("You", question);
+      saveToHistory("Wizz", memoryReply);
+      return;
+    }
+
+    appendMessage("Wizz", "…");
+    typingIndicator.textContent = "Wizz is thinking...";
+
+    try{
+      const mode = getMode();
+      const outbound = mode === "dm" ? createMemoryPrompt(question) : question;
+
+      const historyArr = (JSON.parse(localStorage.getItem("wizzChat")) || [])
+        .slice(-8)
+        .map(m => ({ role: m.sender === "Wizz" ? "assistant" : "user", content: m.msg }));
+
+      const qs = new URLSearchParams({
+        mode,
+        question: outbound,
+        history: JSON.stringify(historyArr)
+      });
+
+      const res = await fetch("/api/wizz?" + qs.toString());
+      const data = await res.json();
+
+      // ONE visible reply only:
+      updateLastWizzMessage(data.answer || "…");
+
+      saveToHistory("You", question);
+      saveToHistory("Wizz", data.answer || "");
+      logChat({ user: question, bot: data.answer || "" });
+    } catch (err){
+      updateLastWizzMessage("⚠️ Error: " + err);
+    } finally {
+      typingIndicator.textContent = "";
+    }
+  }
   </script>
 </body>
 </html>
-
