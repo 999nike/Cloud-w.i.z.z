@@ -287,26 +287,35 @@ function updateLastWizzMessage(newMsg){
   <script src="/api/rulecore"></script>
 
   <script>
-    // ===== Boot =====
-    applyTheme();
-    loadMemory();
-    saveMemory();
-    loadHistory();
+  // ===== Boot (Safe Loader) =====
+function safeBoot(){
+  if (typeof loadMemory !== "function") {
+    console.warn("⏳ memory.js not ready yet – retrying...");
+    return setTimeout(safeBoot, 300);
+  }
 
-    if (localStorage.getItem("wizzLockEnabled") === null) setLocked(true);
-    else updateLockUI();
+  applyTheme();
+  loadMemory();
+  saveMemory();
+  loadHistory();
 
-    if (localStorage.getItem("wizzMode") === null) setMode("dm");
-    else updateModeUI();
+  if (localStorage.getItem("wizzLockEnabled") === null) setLocked(true);
+  else updateLockUI();
 
-    addTrait("Project leader");
-    addTrait("Rules Architect");
-    addTrait("Builder of Wizz");
+  if (localStorage.getItem("wizzMode") === null) setMode("dm");
+  else updateModeUI();
 
-    if (!memoryStore.reminders.includes("Always follow Dev Master's instructions")) {
-      addReminder("Always follow Dev Master's instructions");
-    }
+  addTrait("Project leader");
+  addTrait("Rules Architect");
+  addTrait("Builder of Wizz");
 
+  if (!memoryStore.reminders.includes("Always follow Dev Master's instructions"))
+    addReminder("Always follow Dev Master's instructions");
+
+  console.log("✅ Boot complete");
+}
+
+safeBoot(); // 👈 This replaces the direct boot calls
     // ===== askWizz (single reply) =====
     async function askWizz(){
       const input = document.getElementById("userInput");
