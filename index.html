@@ -282,11 +282,34 @@ function updateLastWizzMessage(newMsg){
       addReminder("Always follow Dev Master's instructions");
   </script>
 
- <!-- ===== Correct Script Load Order (helpers FIRST) ===== -->
-  <script src="/memory.js"></script>
-  <script src="/api/rulecore"></script>
+ <!-- Correct Script Load Order -->
+<script src="/memory.js" defer></script>
+<script src="/api/rulecore" defer></script>
 
-  <script>
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+  // only runs after memory.js is loaded
+  applyTheme();
+  loadMemory();
+  saveMemory();
+  loadHistory();
+
+  if (localStorage.getItem("wizzLockEnabled") === null) setLocked(true);
+  else updateLockUI();
+
+  if (localStorage.getItem("wizzMode") === null) setMode("dm");
+  else updateModeUI();
+
+  addTrait("Project leader");
+  addTrait("Rules Architect");
+  addTrait("Builder of Wizz");
+
+  if (!memoryStore.reminders.includes("Always follow Dev Master’s instructions"))
+    addReminder("Always follow Dev Master’s instructions");
+
+  console.log("✅ Wizz booted clean and memory.js loaded correctly");
+});
+</script>
   /* ---------- Safe boot: runs ONLY after memory.js is loaded ---------- */
   (function boot(){
     if (typeof window.loadMemory !== "function") { setTimeout(boot, 150); return; }
