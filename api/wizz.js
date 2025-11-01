@@ -46,7 +46,18 @@ function readHistory(req) {
   } catch { return []; }
 }
 
+// --- main endpoint -----------------------------------------------------------
 module.exports = async (req, res) => {
+  // --- ✅ CORS bridge so Smokey-Space can call Cloud-Wizz ---
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") {
+    res.status(200).end();
+    return;
+  }
+  // --- end CORS section ---
+
   try {
     if (!API_KEY) {
       return res.status(500).json({ answer: "Wizz: Missing OPENROUTER_API_KEY." });
